@@ -20,8 +20,11 @@ pub struct Line {
 }
 
 impl Line {
-    /// Returns the distance below the line, if applicable. "down" is the direction
+    /// Returns the distance below the line, or 0 if applicable. "below" is the direction
     /// 90 degrees to the right of the vector created from `self.points.0` to `self.points.1`.
+    ///
+    /// Returns 0 when:
+    /// * the distance is not [0, 10]
     pub fn distance_below_line(self, point: MovingPoint) -> f64 {
         let (start, end) = self.points;
         let line_vec = end - start;
@@ -39,7 +42,11 @@ impl Line {
 
         let distance_below = diff.length_projected_onto(line_normalized.rotate90_right());
 
-        f64::max(0f64, distance_below)
+        if 0 < distance_below && distance_below < MAX_FORCE_LENGTH {
+            distance_below
+        } else {
+            0
+        }
     }
 
     /// Returns the amount that each side's hitbox should be extended by.
