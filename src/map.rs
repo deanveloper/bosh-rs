@@ -1,4 +1,5 @@
 use crate::line::Line;
+use std::fmt::{Display, Formatter, Pointer};
 use std::intrinsics::sqrtf64;
 
 /// Represents a point on a map.
@@ -6,6 +7,12 @@ use std::intrinsics::sqrtf64;
 pub struct Point {
     x: f64,
     y: f64,
+}
+
+impl Display for Point {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Point(x: {}, y: {})", self.x, self.y)
+    }
 }
 
 impl Point {
@@ -27,20 +34,19 @@ pub struct Track<'l> {
     pub lines: &'l Vec<Line>,
 }
 
-impl<'l> Track<'l> {
-    pub fn snap_point(&self, to_snap: Point) -> Point {
-        let min_point = self
-            .lines
+impl Track {
+    /// Snaps a point to the nearest point, or returns `to_snap` if
+    /// there are no nearby points.
+    pub fn snap_point(&self, max_dist: f64, to_snap: Point) -> Point {
+        let max_dist_sq = max_dist * max_dist;
+
+        self.lines
             .iter()
             .flat_map(|l| [l.points.0, l.points.1])
             .map(|p| (p, p.distance_squared(to_snap)))
-            .min_by_key(|(p, dist)| dist)
-            .unwrap_or_else((Point::default(), f64::INFINITY));
-
-        if min_point.1 < 5.0 {
-            min_point.0
-        } else {
-            to_snap
-        }
+            .filter(|(_, dist)| dist < &max_dist_sq)
+            .min_by_key(|(_, dist)| dist)
+            .unwrap_or_else(|| (to_snap, 0f64))
+            .0
     }
 }
