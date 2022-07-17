@@ -1,5 +1,5 @@
 use std::fmt::{Display, Formatter};
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// Represents a 2-dimensional vector of floats. Typically used to represent a point
 /// on a track.
@@ -126,5 +126,33 @@ impl Div<f64> for Vector2D {
 
     fn div(self, rhs: f64) -> Self::Output {
         Vector2D(self.0 / rhs, self.1 / rhs)
+    }
+}
+
+impl AddAssign for Vector2D {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+    }
+}
+
+impl SubAssign for Vector2D {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0;
+        self.1 -= rhs.1;
+    }
+}
+
+impl MulAssign for Vector2D {
+    fn mul_assign(&mut self, rhs: Self) {
+        self.0 *= rhs.0;
+        self.1 *= rhs.1;
+    }
+}
+
+impl DivAssign for Vector2D {
+    fn div_assign(&mut self, rhs: Self) {
+        self.0 /= rhs.0;
+        self.1 /= rhs.1;
     }
 }

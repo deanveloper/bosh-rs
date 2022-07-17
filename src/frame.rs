@@ -2,7 +2,7 @@ use crate::bosh::{Bosh, BoshSled, Sled};
 use crate::track::Track;
 
 /// Rider represents a rider in the game.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub enum Rider {
     Together(BoshSled),
     Separate(Bosh, Sled),

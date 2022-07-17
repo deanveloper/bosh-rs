@@ -1,15 +1,15 @@
 use crate::vector::Vector2D;
 
-#[derive(Default, Copy, Clone)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct MovingPoint {
     pub location: Vector2D,
     pub velocity: Vector2D,
 }
 
-#[derive(Default, Copy, Clone)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Bone(pub Vector2D, pub Vector2D);
 
-#[derive(Default, Copy, Clone)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Bosh {
     pub right_foot: MovingPoint,
     pub left_foot: MovingPoint,
@@ -19,7 +19,7 @@ pub struct Bosh {
     pub butt: MovingPoint,
 }
 
-#[derive(Default, Copy, Clone)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Sled {
     pub peg: MovingPoint,
     pub nose: MovingPoint,
@@ -27,7 +27,7 @@ pub struct Sled {
     pub rope: MovingPoint,
 }
 
-#[derive(Default, Copy, Clone)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct BoshSled {
     pub bosh: Bosh,
     pub sled: Sled,

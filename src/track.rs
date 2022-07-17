@@ -40,7 +40,12 @@ impl Track {
         let line_vec = end - start;
         let diff = point.location - start;
         let is_moving_into_line = {
-            let dot = line_vec.rotate90_right().dot_product(point.velocity);
+            let rot_vec = if line.flipped {
+                line_vec.rotate90_left()
+            } else {
+                line_vec.rotate90_right()
+            };
+            let dot = rot_vec.dot_product(point.velocity);
             dot > 0f64
         };
         if !is_moving_into_line {
