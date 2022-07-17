@@ -1,6 +1,6 @@
 use crate::line::Line;
-use std::fmt::{Display, Formatter, Pointer};
-use std::intrinsics::sqrtf64;
+use std::fmt::{Display, Formatter};
+use std::ops::Add;
 
 /// Represents a point on a map.
 #[derive(Copy, Clone, Default)]
@@ -12,6 +12,26 @@ pub struct Point {
 impl Display for Point {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "Point(x: {}, y: {})", self.x, self.y)
+    }
+}
+
+impl Add<Point> for Point {
+    type Output = Point;
+
+    fn add(self, rhs: Self) -> Self {
+        Point {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+}
+
+impl From<(f64, f64)> for Point {
+    fn from(tuple: (f64, f64)) -> Self {
+        Point {
+            x: tuple.0,
+            y: tuple.1,
+        }
     }
 }
 
@@ -34,7 +54,7 @@ pub struct Track<'l> {
     pub lines: &'l Vec<Line>,
 }
 
-impl Track {
+impl<'l> Track<'l> {
     /// Snaps a point to the nearest point, or returns `to_snap` if
     /// there are no nearby points.
     pub fn snap_point(&self, max_dist: f64, to_snap: Point) -> Point {
@@ -44,9 +64,9 @@ impl Track {
             .iter()
             .flat_map(|l| [l.points.0, l.points.1])
             .map(|p| (p, p.distance_squared(to_snap)))
-            .filter(|(_, dist)| dist < &max_dist_sq)
-            .min_by_key(|(_, dist)| dist)
-            .unwrap_or_else(|| (to_snap, 0f64))
+            .filter(|(_, dist)| dist.total_cmp(&max_dist_sq).is_lt())
+            .min_by(|(_, d1), (_, d2)| d1.total_cmp(d2))
+            .unwrap_or((to_snap, 0f64))
             .0
     }
 }
