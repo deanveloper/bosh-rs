@@ -1,3 +1,7 @@
+mod bosh;
+mod line;
+mod map;
+
 #[cfg(test)]
 mod tests {
     #[test]
