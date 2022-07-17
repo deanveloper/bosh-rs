@@ -1,7 +1,4 @@
-use crate::bosh::MovingPoint;
-use crate::track::Track;
 use crate::vector::Vector2D;
-use std::ops::Mul;
 
 #[derive(Copy, Clone)]
 pub enum LineType {

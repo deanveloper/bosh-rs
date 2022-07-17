@@ -3,7 +3,7 @@ use std::ops::{Add, Div, Mul, Neg, Sub};
 
 /// Represents a 2-dimensional vector of floats. Typically used to represent a point
 /// on a track.
-#[derive(Copy, Clone, Debug, Default)]
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Vector2D(pub f64, pub f64);
 
 impl Vector2D {

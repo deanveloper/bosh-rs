@@ -1,8 +1,6 @@
 use crate::bosh::MovingPoint;
 use crate::line::Line;
 use crate::vector::Vector2D;
-use std::fmt::{Display, Formatter};
-use std::ops::Add;
 
 const MAX_FORCE_LENGTH: f64 = 10.0;
 const EXTENSION_RATIO: f64 = 0.25;
@@ -54,10 +52,10 @@ impl Track {
 
         let distance_below = diff.length_projected_onto(line_normalized.rotate90_right());
 
-        if 0 < distance_below && distance_below < MAX_FORCE_LENGTH {
+        if 0f64 < distance_below && distance_below < MAX_FORCE_LENGTH {
             distance_below
         } else {
-            0
+            0f64
         }
     }
 
@@ -66,9 +64,9 @@ impl Track {
         // number of units to extend by
         let mut p0_extension = 0f64;
         let mut p1_extension = 0f64;
-        let length = self.length_squared().sqrt();
+        let length = line.length_squared().sqrt();
 
-        for other in lines {
+        for other in &self.lines {
             if line.points.0 == other.points.0 && line.points.1 == other.points.1 {
                 continue;
             }
