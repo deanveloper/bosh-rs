@@ -1,13 +1,13 @@
-use crate::track::Point;
+use crate::vector::Vector2D;
 
 #[derive(Default, Copy, Clone)]
 pub struct MovingPoint {
-    pub location: Point,
-    pub prev_location: Point,
+    pub location: Vector2D,
+    pub velocity: Vector2D,
 }
 
 #[derive(Default, Copy, Clone)]
-pub struct Bone(pub Point, pub Point);
+pub struct Bone(pub Vector2D, pub Vector2D);
 
 #[derive(Default, Copy, Clone)]
 pub struct Bosh {
