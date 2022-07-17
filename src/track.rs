@@ -1,4 +1,4 @@
-use crate::bosh::MovingPoint;
+use crate::bosh::BoshPoint;
 use crate::line::Line;
 use crate::vector::Vector2D;
 
@@ -35,7 +35,7 @@ impl Track {
     ///  * the point is above the line
     ///  * the point is moving "upward"
     ///  * the point is outside of the line, including extensions
-    pub fn distance_below_line(&self, line: Line, point: MovingPoint) -> f64 {
+    pub fn distance_below_line(&self, line: Line, point: BoshPoint) -> f64 {
         let (start, end) = line.points;
         let line_vec = end - start;
         let diff = point.location - start;
