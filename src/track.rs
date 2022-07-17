@@ -3,6 +3,8 @@ use std::fmt::{Display, Formatter};
 use std::ops::Add;
 
 /// Represents a point on a track. The origin of the track is at { x: 0, y: 0 }.
+///
+/// While the units are technically arbitrary, they are typically thought of as "pixels".
 #[derive(Copy, Clone, Default)]
 pub struct Point {
     x: f64,
@@ -47,14 +49,13 @@ impl Point {
 }
 
 /// A track in linerider.
-///
-/// * `'l`: the lifetime of the vector of lines.
-pub struct Track<'l> {
+#[derive(Clone)]
+pub struct Track {
     pub start: Point,
-    pub lines: &'l Vec<Line>,
+    pub lines: Vec<Line>,
 }
 
-impl<'l> Track<'l> {
+impl Track {
     /// Snaps a point to the nearest point, or returns `to_snap` if
     /// there are no nearby points.
     pub fn snap_point(&self, max_dist: f64, to_snap: Point) -> Point {

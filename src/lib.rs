@@ -1,6 +1,8 @@
-mod bosh;
-mod line;
-mod track;
+pub mod bosh;
+pub mod frame;
+pub mod line;
+pub mod physics;
+pub mod track;
 
 #[cfg(test)]
 mod tests {

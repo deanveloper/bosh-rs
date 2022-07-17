@@ -1,57 +1,34 @@
 use crate::track::Point;
 
-pub struct Link(pub Point, pub Point);
+#[derive(Default, Copy, Clone)]
+pub struct MovingPoint {
+    pub location: Point,
+    pub prev_location: Point,
+}
 
+#[derive(Default, Copy, Clone)]
+pub struct Bone(pub Point, pub Point);
+
+#[derive(Default, Copy, Clone)]
 pub struct Bosh {
-    pub right_foot: Point,
-    pub left_foot: Point,
-    pub left_arm: Point,
-    pub right_arm: Point,
-    pub shoulder: Point,
-    pub butt: Point,
+    pub right_foot: MovingPoint,
+    pub left_foot: MovingPoint,
+    pub left_arm: MovingPoint,
+    pub right_arm: MovingPoint,
+    pub shoulder: MovingPoint,
+    pub butt: MovingPoint,
 }
 
+#[derive(Default, Copy, Clone)]
 pub struct Sled {
-    pub peg: Point,
-    pub nose: Point,
-    pub tail: Point,
-    pub rope: Point,
+    pub peg: MovingPoint,
+    pub nose: MovingPoint,
+    pub tail: MovingPoint,
+    pub rope: MovingPoint,
 }
 
+#[derive(Default, Copy, Clone)]
 pub struct BoshSled {
     pub bosh: Bosh,
     pub sled: Sled,
-}
-
-impl Default for Bosh {
-    fn default() -> Self {
-        Bosh {
-            right_foot: Point::default(),
-            left_foot: Point::default(),
-            left_arm: Point::default(),
-            right_arm: Point::default(),
-            shoulder: Point::default(),
-            butt: Point::default(),
-        }
-    }
-}
-
-impl Default for Sled {
-    fn default() -> Self {
-        Sled {
-            peg: Point::default(),
-            nose: Point::default(),
-            tail: Point::default(),
-            rope: Point::default(),
-        }
-    }
-}
-
-impl Default for BoshSled {
-    fn default() -> BoshSled {
-        return BoshSled {
-            bosh: Bosh::default(),
-            sled: Sled::default(),
-        };
-    }
 }
