@@ -1,6 +1,6 @@
 mod bosh;
 mod line;
-mod map;
+mod track;
 
 #[cfg(test)]
 mod tests {

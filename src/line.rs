@@ -1,4 +1,4 @@
-use crate::map::Point;
+use crate::track::Point;
 
 pub enum LineType {
     Normal,
