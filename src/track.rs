@@ -2,7 +2,7 @@ use crate::line::Line;
 use std::fmt::{Display, Formatter};
 use std::ops::Add;
 
-/// Represents a point on a map.
+/// Represents a point on a track. The origin of the track is at { x: 0, y: 0 }.
 #[derive(Copy, Clone, Default)]
 pub struct Point {
     x: f64,
@@ -11,7 +11,7 @@ pub struct Point {
 
 impl Display for Point {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Point(x: {}, y: {})", self.x, self.y)
+        write!(f, "({}, {})", self.x, self.y)
     }
 }
 
