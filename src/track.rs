@@ -1,5 +1,5 @@
 use crate::bosh::BoshPoint;
-use crate::line::Line;
+use crate::line::{Line, LineType};
 use crate::vector::Vector2D;
 use std::collections::HashMap;
 
@@ -19,6 +19,9 @@ impl<'a> Track<'a> {
     pub fn new(start: Vector2D, lines: &'a Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
+            if line.line_type == LineType::Scenery {
+                continue;
+            }
             hitbox_extensions.insert(
                 *line,
                 Track::calculate_hitbox_extensions_for_line(line, &lines),
@@ -97,6 +100,9 @@ impl<'a> Track<'a> {
         let length = line.length_squared().sqrt();
 
         for other in lines {
+            if other.line_type == LineType::Scenery {
+                continue;
+            }
             if line.points.0 == other.points.0 && line.points.1 == other.points.1 {
                 continue;
             }
