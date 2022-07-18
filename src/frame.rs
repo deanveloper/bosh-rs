@@ -11,7 +11,7 @@ pub enum Rider {
 
 /// Frame represents a frozen instance of riders on a track.
 #[derive(Clone)]
-pub struct Frame {
+pub struct Frame<'a> {
     pub riders: Vec<Rider>,
-    pub track: Rc<Track>,
+    pub track: Rc<Track<'a>>,
 }

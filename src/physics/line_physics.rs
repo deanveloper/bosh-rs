@@ -2,7 +2,7 @@ use crate::bosh::BoshPoint;
 use crate::line::LineType;
 use crate::track::Track;
 
-pub fn update_boshpoint_position(point: BoshPoint, track: &Track) -> BoshPoint {
+pub fn update_boshpoint_position(point: BoshPoint, track: &Track<'_>) -> BoshPoint {
     let mut next_point = point;
 
     for line in track.lines.iter() {

@@ -8,15 +8,15 @@ const EXTENSION_RATIO: f64 = 0.25;
 
 /// A track in linerider.
 #[derive(Clone)]
-pub struct Track {
+pub struct Track<'a> {
     pub start: Vector2D,
-    pub lines: Vec<Line>,
+    pub lines: &'a Vec<Line>,
 
     hitbox_extensions: HashMap<Line, (f64, f64)>,
 }
 
-impl Track {
-    pub fn new(start: Vector2D, lines: Vec<Line>) -> Track {
+impl<'a> Track<'a> {
+    pub fn new(start: Vector2D, lines: &'a Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
             hitbox_extensions.insert(
@@ -75,8 +75,9 @@ impl Track {
         let line_normalized = line_vec / line_length;
 
         let (ext_l, ext_r) = self.hitbox_extensions.get(line).unwrap_or(&(0f64, 0f64));
+        let (ext_l, ext_r) = (*ext_l, *ext_r);
         let point_projected_on_line = point_from_start.dot_product(line_normalized);
-        if !(ext_l..=(ext_r + line_length)).contains(&&point_projected_on_line) {
+        if !(ext_l..=(ext_r + line_length)).contains(&point_projected_on_line) {
             return 0f64;
         }
 
