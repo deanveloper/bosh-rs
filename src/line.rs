@@ -1,8 +1,7 @@
 use crate::vector::Vector2D;
-use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub enum LineType {
     Normal,
     Accelerate { amount: u64 },
@@ -33,7 +32,7 @@ impl LineType {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Line {
     pub flipped: bool,
     pub line_type: LineType,
@@ -59,22 +58,3 @@ impl Line {
         self.points.0.distance_squared(self.points.1)
     }
 }
-
-impl PartialEq<Self> for Line {
-    fn eq(&self, other: &Self) -> bool {
-        self.flipped == other.flipped
-            && self.line_type == other.line_type
-            && self.points.0 .0.to_bits() == self.points.0 .0.to_bits()
-            && self.points.0 .0.to_bits() == self.points.0 .0.to_bits()
-            && self.points.0 .0.to_bits() == self.points.0 .0.to_bits()
-            && self.points.0 .0.to_bits() == self.points.0 .0.to_bits()
-    }
-}
-
-impl Hash for Line {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        todo!()
-    }
-}
-
-impl Eq for Line {}
