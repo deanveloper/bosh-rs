@@ -2,8 +2,8 @@ use crate::vector::Vector2D;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct BoshPoint {
+    pub previous_location: Vector2D,
     pub location: Vector2D,
-    pub velocity: Vector2D,
     pub friction: f64,
 }
 

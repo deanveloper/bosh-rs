@@ -1,6 +1,7 @@
 use crate::bosh::BoshPoint;
 use crate::line::Line;
 use crate::vector::Vector2D;
+use std::collections::HashMap;
 
 const MAX_FORCE_LENGTH: f64 = 10.0;
 const EXTENSION_RATIO: f64 = 0.25;
@@ -10,9 +11,27 @@ const EXTENSION_RATIO: f64 = 0.25;
 pub struct Track {
     pub start: Vector2D,
     pub lines: Vec<Line>,
+
+    hitbox_extensions: HashMap<Line, (f64, f64)>,
 }
 
 impl Track {
+    pub fn new(start: Vector2D, lines: Vec<Line>) -> Track {
+        let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
+        for line in lines.iter() {
+            hitbox_extensions.insert(
+                *line,
+                Track::calculate_hitbox_extensions_for_line(line, &lines),
+            );
+        }
+
+        Track {
+            start,
+            lines,
+            hitbox_extensions,
+        }
+    }
+
     /// Snaps a point to the nearest point, or returns `to_snap` if
     /// there are no nearby points.
     pub fn snap_point(&self, max_dist: f64, to_snap: Vector2D) -> Vector2D {
@@ -35,17 +54,17 @@ impl Track {
     ///  * the point is above the line
     ///  * the point is moving "upward"
     ///  * the point is outside of the line, including extensions
-    pub fn distance_below_line(&self, line: Line, point: BoshPoint) -> f64 {
+    pub fn distance_below_line(&self, line: &Line, point: BoshPoint) -> f64 {
         let (start, end) = line.points;
         let line_vec = end - start;
-        let diff = point.location - start;
+        let point_from_start = point.location - start;
         let is_moving_into_line = {
             let rot_vec = if line.flipped {
                 line_vec.rotate90_left()
             } else {
                 line_vec.rotate90_right()
             };
-            let dot = rot_vec.dot_product(point.velocity);
+            let dot = rot_vec.dot_product(point.location - point.previous_location);
             dot > 0f64
         };
         if !is_moving_into_line {
@@ -55,8 +74,13 @@ impl Track {
         let line_length = line_vec.length_squared().sqrt();
         let line_normalized = line_vec / line_length;
 
-        let distance_below = diff.length_projected_onto(line_normalized.rotate90_right());
+        let (ext_l, ext_r) = self.hitbox_extensions.get(line).unwrap_or(&(0f64, 0f64));
+        let point_projected_on_line = point_from_start.dot_product(line_normalized);
+        if !(ext_l..=(ext_r + line_length)).contains(&&point_projected_on_line) {
+            return 0f64;
+        }
 
+        let distance_below = point_from_start.dot_product(line_normalized.rotate90_right());
         if 0f64 < distance_below && distance_below < MAX_FORCE_LENGTH {
             distance_below
         } else {
@@ -65,13 +89,13 @@ impl Track {
     }
 
     /// Returns the amount that each side's hitbox should be extended by.
-    pub fn calculate_hitbox_extensions(&self, line: Line) -> (f64, f64) {
+    fn calculate_hitbox_extensions_for_line(line: &Line, lines: &Vec<Line>) -> (f64, f64) {
         // number of units to extend by
         let mut p0_extension = 0f64;
         let mut p1_extension = 0f64;
         let length = line.length_squared().sqrt();
 
-        for other in &self.lines {
+        for other in lines {
             if line.points.0 == other.points.0 && line.points.1 == other.points.1 {
                 continue;
             }

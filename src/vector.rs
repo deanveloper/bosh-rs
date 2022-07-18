@@ -1,9 +1,10 @@
 use std::fmt::{Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// Represents a 2-dimensional vector of floats. Typically used to represent a point
 /// on a track.
-#[derive(Copy, Clone, Debug, Default, PartialEq)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct Vector2D(pub f64, pub f64);
 
 impl Vector2D {
@@ -143,16 +144,30 @@ impl SubAssign for Vector2D {
     }
 }
 
-impl MulAssign for Vector2D {
-    fn mul_assign(&mut self, rhs: Self) {
-        self.0 *= rhs.0;
-        self.1 *= rhs.1;
+impl MulAssign<f64> for Vector2D {
+    fn mul_assign(&mut self, rhs: f64) {
+        self.0 *= rhs;
+        self.1 *= rhs;
     }
 }
 
-impl DivAssign for Vector2D {
-    fn div_assign(&mut self, rhs: Self) {
-        self.0 /= rhs.0;
-        self.1 /= rhs.1;
+impl DivAssign<f64> for Vector2D {
+    fn div_assign(&mut self, rhs: f64) {
+        self.0 /= rhs;
+        self.1 /= rhs;
     }
 }
+
+impl Hash for Vector2D {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.to_bits().hash(state);
+        self.1.to_bits().hash(state);
+    }
+}
+
+impl PartialEq for Vector2D {
+    fn eq(&self, other: &Self) -> bool {
+        return self.0.to_bits() == other.0.to_bits() && self.1.to_bits() == other.1.to_bits();
+    }
+}
+impl Eq for Vector2D {}
