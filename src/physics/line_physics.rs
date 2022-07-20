@@ -1,8 +1,15 @@
-use crate::bosh::BoshPoint;
 use crate::line::LineType;
 use crate::track::Track;
+use crate::vector::Vector2D;
 
-pub fn update_boshpoint_position(point: BoshPoint, track: &Track<'_>) -> BoshPoint {
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct PhysicsPoint {
+    pub previous_location: Vector2D,
+    pub location: Vector2D,
+    pub friction: f64,
+}
+
+pub fn update_position(point: PhysicsPoint, track: &Track<'_>) -> PhysicsPoint {
     let mut next_point = point;
 
     for line in track.lines.iter() {

@@ -1,5 +1,5 @@
-use crate::bosh::BoshPoint;
 use crate::line::{Line, LineType};
+use crate::physics::line_physics::PhysicsPoint;
 use crate::vector::Vector2D;
 use std::collections::HashMap;
 
@@ -57,7 +57,7 @@ impl<'a> Track<'a> {
     ///  * the point is above the line
     ///  * the point is moving "upward"
     ///  * the point is outside of the line, including extensions
-    pub fn distance_below_line(&self, line: &Line, point: BoshPoint) -> f64 {
+    pub fn distance_below_line(&self, line: &Line, point: PhysicsPoint) -> f64 {
         let (start, end) = line.points;
         let line_vec = end - start;
         let point_from_start = point.location - start;
