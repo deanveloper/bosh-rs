@@ -1,7 +1,7 @@
-pub mod bosh;
 pub mod frame;
 pub mod line;
 pub mod physics;
+pub mod rider;
 pub mod track;
 pub mod vector;
 

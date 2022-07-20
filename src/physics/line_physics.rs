@@ -9,7 +9,7 @@ pub struct PhysicsPoint {
     pub friction: f64,
 }
 
-pub fn update_position(point: PhysicsPoint, track: &Track<'_>) -> PhysicsPoint {
+pub fn update_position(point: PhysicsPoint, track: &Track) -> PhysicsPoint {
     let mut next_point = point;
 
     for line in track.lines.iter() {

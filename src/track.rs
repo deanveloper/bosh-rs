@@ -7,16 +7,15 @@ const MAX_FORCE_LENGTH: f64 = 10.0;
 const EXTENSION_RATIO: f64 = 0.25;
 
 /// A track in linerider.
-#[derive(Clone)]
-pub struct Track<'a> {
+pub struct Track {
     pub start: Vector2D,
-    pub lines: &'a Vec<Line>,
+    pub lines: Box<Vec<Line>>,
 
     hitbox_extensions: HashMap<Line, (f64, f64)>,
 }
 
-impl<'a> Track<'a> {
-    pub fn new(start: Vector2D, lines: &'a Vec<Line>) -> Track {
+impl Track {
+    pub fn new(start: Vector2D, lines: &mut Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
             if line.line_type == LineType::Scenery {
@@ -30,7 +29,7 @@ impl<'a> Track<'a> {
 
         Track {
             start,
-            lines,
+            lines: Box::new(lines.clone()),
             hitbox_extensions,
         }
     }
@@ -119,5 +118,15 @@ impl<'a> Track<'a> {
         }
 
         (p0_extension, p1_extension)
+    }
+}
+
+impl Clone for Track {
+    fn clone(&self) -> Self {
+        Track {
+            start: self.start,
+            lines: self.lines.clone(),
+            hitbox_extensions: self.hitbox_extensions.clone(),
+        }
     }
 }
