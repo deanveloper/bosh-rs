@@ -1,2 +1,2 @@
 pub mod bone;
-pub mod bosh;
+pub mod entities;

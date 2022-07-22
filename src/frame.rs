@@ -1,17 +1,10 @@
-use crate::rider::bosh::{Bosh, BoshSled, Sled};
+use crate::rider::entities::Entity;
 use crate::track::Track;
 use std::rc::Rc;
-
-/// Rider represents a rider in the game.
-#[derive(Clone, Debug, PartialEq)]
-pub enum Rider {
-    Together(BoshSled),
-    Separate(Bosh, Sled),
-}
 
 /// Frame represents a frozen instance of riders on a track.
 #[derive(Clone)]
 pub struct Frame {
-    pub riders: Vec<Rider>,
+    pub riders: Vec<Entity>,
     pub track: Rc<Track>,
 }
