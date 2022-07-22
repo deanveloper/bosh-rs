@@ -115,7 +115,7 @@ impl Bone for MounterBone {
 
 impl Bone for RepelBone {
     fn standard_length(&self) -> f64 {
-        self.initial_len
+        self.initial_len * self.length_factor
     }
     fn points(&self) -> (PhysicsPoint, PhysicsPoint) {
         (
