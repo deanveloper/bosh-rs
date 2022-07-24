@@ -13,6 +13,18 @@ pub enum Entity {
 }
 
 impl Entity {
+    pub fn points(&self) -> Vec<PhysicsPoint> {
+        match self {
+            Entity::Bosh(bosh) => bosh.points.values().copied().collect(),
+            Entity::Sled(sled) => sled.points.values().copied().collect(),
+            Entity::BoshSled(bosh_sled) => {
+                let bosh_points = bosh_sled.bosh.points.values();
+                let sled_points = bosh_sled.sled.points.values();
+
+                Iterator::chain(bosh_points, sled_points).copied().collect()
+            }
+        }
+    }
     pub fn point_at(&self, index: PointIndex) -> Option<PhysicsPoint> {
         match self {
             Entity::Bosh(bosh) => bosh.points.get(&index).copied(),
@@ -190,6 +202,7 @@ fn make_physics_point(loc: Vector2D, friction: f64) -> PhysicsPoint {
     PhysicsPoint {
         previous_location: loc,
         location: loc,
+        velocity: Default::default(),
         friction,
     }
 }

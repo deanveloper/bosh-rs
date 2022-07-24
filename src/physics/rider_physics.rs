@@ -4,7 +4,9 @@ use crate::rider::entities::{Entity, PointIndex};
 use crate::vector::Vector2D;
 use std::collections::HashMap;
 
-pub fn apply_gravity(_rider: &Entity) {}
+pub fn apply_gravity(rider: &mut Entity) {
+    rider.points();
+}
 
 /// update_bones updates all points in the entity according to bone tension
 pub fn update_bones(rider: &mut Entity) {
