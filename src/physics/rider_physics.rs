@@ -6,18 +6,25 @@ use std::collections::HashMap;
 
 pub fn apply_gravity(_rider: &Entity) {}
 
+/// update_bones updates all points in the entity according to bone tension
 pub fn update_bones(rider: &mut Entity) {
     match rider {
         Entity::Bosh(bosh) => {
             let standard_bones = bosh.bones.clone();
-            next_bone_locs(&standard_bones, &mut bosh.points, next_standardbone_locs);
+            for bone in standard_bones {
+                update_bone(&bone, &mut bosh.points, next_standardbone_locs);
+            }
 
             let repel_bones = bosh.repel_bones.clone();
-            next_bone_locs(&repel_bones, &mut bosh.points, next_repelbone_locs);
+            for bone in repel_bones {
+                update_bone(&bone, &mut bosh.points, next_repelbone_locs);
+            }
         }
         Entity::Sled(sled) => {
             let standard_bones = sled.bones.clone();
-            next_bone_locs(&standard_bones, &mut sled.points, next_standardbone_locs);
+            for bone in standard_bones {
+                update_bone(&bone, &mut sled.points, next_standardbone_locs);
+            }
         }
         Entity::BoshSled(bosh_sled) => {
             // just recursively call on the bosh and the sled
@@ -28,24 +35,19 @@ pub fn update_bones(rider: &mut Entity) {
 }
 
 /// Generic wrapper to easily use next_repelbone_locs/next_standardbone_locs
-fn next_bone_locs<T, F>(
-    bones: &Vec<T>,
-    points: &mut HashMap<PointIndex, PhysicsPoint>,
-    next_locs: F,
-) where
+fn update_bone<T, F>(bone: &T, points: &mut HashMap<PointIndex, PhysicsPoint>, next_locs: F)
+where
     T: Bone,
     F: Fn(&T, &HashMap<PointIndex, PhysicsPoint>) -> (Vector2D, Vector2D),
 {
-    for bone in bones {
-        let (i1, i2) = bone.points();
-        let (p1, p2) = next_locs(bone, points);
+    let (i1, i2) = bone.points();
+    let (p1, p2) = next_locs(bone, points);
 
-        if let Some(p) = points.get_mut(&i1) {
-            p.location = p1
-        }
-        if let Some(p) = points.get_mut(&i2) {
-            p.location = p2
-        }
+    if let Some(p) = points.get_mut(&i1) {
+        p.location = p1
+    }
+    if let Some(p) = points.get_mut(&i2) {
+        p.location = p2
     }
 }
 
