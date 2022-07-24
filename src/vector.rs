@@ -167,7 +167,7 @@ impl Hash for Vector2D {
 
 impl PartialEq for Vector2D {
     fn eq(&self, other: &Self) -> bool {
-        return self.0.to_bits() == other.0.to_bits() && self.1.to_bits() == other.1.to_bits();
+        self.0.to_bits() == other.0.to_bits() && self.1.to_bits() == other.1.to_bits()
     }
 }
 impl Eq for Vector2D {}

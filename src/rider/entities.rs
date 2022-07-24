@@ -1,7 +1,5 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::rc::Rc;
 
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::bone::{MounterBone, RepelBone, StandardBone};
@@ -9,28 +7,21 @@ use crate::vector::Vector2D;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Entity {
-    Bosh(Rc<RefCell<Bosh>>),
-    Sled(Rc<RefCell<Sled>>),
-    BoshSled(Rc<RefCell<BoshSled>>),
+    Bosh(Bosh),
+    Sled(Sled),
+    BoshSled(BoshSled),
 }
 
 impl Entity {
     pub fn point_at(&self, index: PointIndex) -> Option<PhysicsPoint> {
         match self {
-            Entity::Bosh(bosh) => {
-                let bosh = bosh.borrow();
-                bosh.points.get(&index).map(|p| *p)
-            }
-            Entity::Sled(sled) => {
-                let sled = sled.borrow();
-                sled.points.get(&index).map(|p| *p)
-            }
+            Entity::Bosh(bosh) => bosh.points.get(&index).copied(),
+            Entity::Sled(sled) => sled.points.get(&index).copied(),
             Entity::BoshSled(bosh_sled) => {
-                let bosh_sled = bosh_sled.borrow();
                 if index.is_bosh() {
-                    bosh_sled.bosh.borrow().points.get(&index).map(|p| *p)
+                    bosh_sled.bosh.points.get(&index).copied()
                 } else {
-                    bosh_sled.sled.borrow().points.get(&index).map(|p| *p)
+                    bosh_sled.sled.points.get(&index).copied()
                 }
             }
         }
@@ -62,27 +53,27 @@ impl PointIndex {
 pub struct Bosh {
     pub points: HashMap<PointIndex, PhysicsPoint>,
 
-    pub bones: Vec<Box<StandardBone>>,
-    pub repel_bones: Vec<Box<RepelBone>>,
+    pub bones: Vec<StandardBone>,
+    pub repel_bones: Vec<RepelBone>,
 }
 
 #[derive(Clone, Debug)]
 pub struct Sled {
     pub points: HashMap<PointIndex, PhysicsPoint>,
 
-    pub bones: Vec<Box<StandardBone>>,
+    pub bones: Vec<StandardBone>,
 }
 
 #[derive(Clone, Debug)]
 pub struct BoshSled {
-    pub bosh: Rc<RefCell<Bosh>>,
-    pub sled: Rc<RefCell<Sled>>,
+    pub bosh: Bosh,
+    pub sled: Sled,
 
-    pub mounter_bones: Vec<Box<MounterBone>>,
+    pub mounter_bones: Vec<MounterBone>,
 }
 
-impl Bosh {
-    pub fn new() -> Rc<RefCell<Bosh>> {
+impl Default for Bosh {
+    fn default() -> Bosh {
         let left_foot = make_physics_point(Vector2D(10.0, 5.0), 0.0);
         let right_foot = make_physics_point(Vector2D(10.0, 5.0), 0.0);
         let left_hand = make_physics_point(Vector2D(11.5, -5.0), 0.1);
@@ -90,7 +81,7 @@ impl Bosh {
         let shoulder = make_physics_point(Vector2D(5.0, -5.5), 0.8);
         let butt = make_physics_point(Vector2D(5.0, 0.0), 0.8);
 
-        let bosh = Rc::new(RefCell::new(Bosh {
+        let mut bosh = Bosh {
             points: HashMap::from([
                 (PointIndex::BoshLeftFoot, left_foot),
                 (PointIndex::BoshRightFoot, right_foot),
@@ -101,10 +92,9 @@ impl Bosh {
             ]),
             bones: vec![],
             repel_bones: vec![],
-        }));
+        };
 
-        bosh.borrow_mut().bones = make_standard_bones(
-            Entity::Bosh(bosh.clone()),
+        bosh.bones = make_standard_bones(
             vec![
                 (PointIndex::BoshShoulder, PointIndex::BoshButt),
                 (PointIndex::BoshShoulder, PointIndex::BoshLeftHand),
@@ -113,26 +103,27 @@ impl Bosh {
                 (PointIndex::BoshButt, PointIndex::BoshRightFoot),
                 (PointIndex::BoshShoulder, PointIndex::BoshRightHand),
             ],
+            &bosh.points,
         );
-        bosh.borrow_mut().repel_bones = make_repel_bones(
-            Entity::Bosh(bosh.clone()),
+        bosh.repel_bones = make_repel_bones(
             vec![
                 (PointIndex::BoshShoulder, PointIndex::BoshLeftFoot, 0.5),
                 (PointIndex::BoshShoulder, PointIndex::BoshRightFoot, 0.5),
             ],
+            &bosh.points,
         );
 
         bosh
     }
 }
 
-impl Sled {
-    pub fn new() -> Rc<RefCell<Sled>> {
+impl Default for Sled {
+    fn default() -> Sled {
         let peg = make_physics_point(Vector2D(0.0, 0.0), 0.8);
         let nose = make_physics_point(Vector2D(15.0, 5.0), 0.0);
         let tail = make_physics_point(Vector2D(0.0, 5.0), 0.0);
         let rope = make_physics_point(Vector2D(17.5, 0.0), 0.0);
-        let sled = Rc::new(RefCell::new(Sled {
+        let mut sled = Sled {
             points: HashMap::from([
                 (PointIndex::SledPeg, peg),
                 (PointIndex::SledNose, nose),
@@ -140,10 +131,9 @@ impl Sled {
                 (PointIndex::SledRope, rope),
             ]),
             bones: vec![],
-        }));
+        };
 
-        sled.borrow_mut().bones = make_standard_bones(
-            Entity::Sled(sled.clone()),
+        sled.bones = make_standard_bones(
             vec![
                 (PointIndex::SledPeg, PointIndex::SledTail),
                 (PointIndex::SledTail, PointIndex::SledNose),
@@ -152,23 +142,24 @@ impl Sled {
                 (PointIndex::SledPeg, PointIndex::SledNose),
                 (PointIndex::SledRope, PointIndex::SledTail),
             ],
+            &sled.points,
         );
 
         sled
     }
 }
 
-impl BoshSled {
-    pub fn new() -> Rc<RefCell<BoshSled>> {
-        let bosh = Bosh::new();
-        let sled = Sled::new();
+impl Default for BoshSled {
+    fn default() -> BoshSled {
+        let bosh = Default::default();
+        let sled = Default::default();
 
         BoshSled {
-            bosh: bosh.clone(),
-            sled: sled.clone(),
+            bosh,
+            sled,
             mounter_bones: vec![],
         };
-        todo!()
+        todo!("mounter bones")
     }
 }
 
@@ -202,41 +193,41 @@ fn make_physics_point(loc: Vector2D, friction: f64) -> PhysicsPoint {
         friction,
     }
 }
-fn length_between(entity: &Entity, p1: PointIndex, p2: PointIndex) -> f64 {
-    (entity.point_at(p2).expect("").location - entity.point_at(p1).expect("").location)
+fn length_between(
+    p1: &PointIndex,
+    p2: &PointIndex,
+    point_map: &HashMap<PointIndex, PhysicsPoint>,
+) -> f64 {
+    (point_map.get(p2).expect("").location - point_map.get(p1).expect("").location)
         .length_squared()
         .sqrt()
 }
 
 fn make_repel_bones(
-    entity: Entity,
     bones: Vec<(PointIndex, PointIndex, f64)>,
-) -> Vec<Box<RepelBone>> {
+    point_map: &HashMap<PointIndex, PhysicsPoint>,
+) -> Vec<RepelBone> {
     bones
         .iter()
-        .map(|(p1, p2, length_factor)| {
-            Box::new(RepelBone {
-                p1: *p1,
-                p2: *p2,
-                length_factor: *length_factor,
-                resting_length: length_between(&entity, *p1, *p2),
-            })
+        .map(|(p1, p2, length_factor)| RepelBone {
+            p1: *p1,
+            p2: *p2,
+            length_factor: *length_factor,
+            resting_length: length_between(p1, p2, point_map),
         })
         .collect()
 }
 
 fn make_standard_bones(
-    entity: Entity,
     bones: Vec<(PointIndex, PointIndex)>,
-) -> Vec<Box<StandardBone>> {
+    point_map: &HashMap<PointIndex, PhysicsPoint>,
+) -> Vec<StandardBone> {
     bones
         .iter()
-        .map(|(p1, p2)| {
-            Box::new(StandardBone {
-                p1: *p1,
-                p2: *p2,
-                resting_length: length_between(&entity, *p1, *p2),
-            })
+        .map(|(p1, p2)| StandardBone {
+            p1: *p1,
+            p2: *p2,
+            resting_length: length_between(p1, p2, point_map),
         })
         .collect()
 }

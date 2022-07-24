@@ -9,14 +9,14 @@ mod tests {
 
     #[test]
     fn rider_physics() {
-        let original_bosh = Entity::Bosh(Bosh::new());
-        let new_bosh = original_bosh.clone();
-        update_bones(&new_bosh);
+        let original_bosh = Entity::Bosh(Bosh::default());
+        let mut new_bosh = original_bosh.clone();
+        update_bones(&mut new_bosh);
 
         assert_eq!(
             original_bosh, new_bosh,
             "should be equal: {:?}, {:?}",
-            original_bosh, new_bosh
+            original_bosh, new_bosh,
         );
     }
 }

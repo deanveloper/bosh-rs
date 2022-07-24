@@ -1,47 +1,66 @@
+use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::bone::{RepelBone, StandardBone};
-use crate::rider::entities::Entity;
+use crate::rider::entities::{Entity, PointIndex};
 use crate::vector::Vector2D;
+use std::collections::HashMap;
 
-pub fn update_bones(rider: &Entity) {
+pub fn apply_gravity(_rider: &Entity) {}
+
+pub fn update_bones(rider: &mut Entity) {
     match rider {
         Entity::Bosh(bosh) => {
-            let bones = bosh.borrow().bones.clone();
+            let bones = bosh.bones.clone();
             for bone in bones {
-                let (p1, p2) = next_standardbone_locs(rider, bone.as_ref());
+                let (p1, p2) = next_standardbone_locs(&bone, &bosh.points);
 
-                let points = &mut bosh.borrow_mut().points;
-                points.get_mut(&bone.p1).map(|p| p.location = p1);
-                points.get_mut(&bone.p2).map(|p| p.location = p2);
+                let points = &mut bosh.points;
+                if let Some(p) = points.get_mut(&bone.p1) {
+                    p.location = p1
+                }
+                if let Some(p) = points.get_mut(&bone.p2) {
+                    p.location = p2
+                }
             }
-            let repel_bones = bosh.borrow().repel_bones.clone();
+            let repel_bones = bosh.repel_bones.clone();
             for repel in repel_bones {
-                let (p1, p2) = next_repelbone_locs(rider, repel.as_ref());
+                let (p1, p2) = next_repelbone_locs(&repel, &bosh.points);
 
-                let points = &mut bosh.borrow_mut().points;
-                points.get_mut(&repel.p1).map(|p| p.location = p1);
-                points.get_mut(&repel.p2).map(|p| p.location = p2);
+                let points = &mut bosh.points;
+                if let Some(p) = points.get_mut(&repel.p1) {
+                    p.location = p1
+                }
+                if let Some(p) = points.get_mut(&repel.p2) {
+                    p.location = p2
+                }
             }
         }
         Entity::Sled(sled) => {
-            let bones = sled.borrow().bones.clone();
+            let bones = sled.bones.clone();
             for bone in bones {
-                let (p1, p2) = next_standardbone_locs(rider, bone.as_ref());
+                let (p1, p2) = next_standardbone_locs(&bone, &sled.points);
 
-                let points = &mut sled.borrow_mut().points;
-                points.get_mut(&bone.p1).map(|p| p.location = p1);
-                points.get_mut(&bone.p2).map(|p| p.location = p2);
+                let points = &mut sled.points;
+                if let Some(p) = points.get_mut(&bone.p1) {
+                    p.location = p1
+                }
+                if let Some(p) = points.get_mut(&bone.p2) {
+                    p.location = p2
+                }
             }
         }
         Entity::BoshSled(bosh_sled) => {
-            update_bones(&Entity::Bosh(bosh_sled.borrow().clone().bosh));
-            update_bones(&Entity::Sled(bosh_sled.borrow().clone().sled));
+            update_bones(&mut Entity::Bosh(bosh_sled.clone().bosh));
+            update_bones(&mut Entity::Sled(bosh_sled.clone().sled));
         }
     }
 }
 
-pub fn next_repelbone_locs(entity: &Entity, bone: &RepelBone) -> (Vector2D, Vector2D) {
-    let p1 = entity.point_at(bone.p1).expect("no p1 found");
-    let p2 = entity.point_at(bone.p2).expect("no p2 found");
+pub fn next_repelbone_locs(
+    bone: &RepelBone,
+    point_map: &HashMap<PointIndex, PhysicsPoint>,
+) -> (Vector2D, Vector2D) {
+    let p1 = point_map.get(&bone.p1).expect("no p1 found");
+    let p2 = point_map.get(&bone.p2).expect("no p2 found");
 
     let diff = p2.location - p1.location;
     let length = diff.length_squared().sqrt();
@@ -57,9 +76,12 @@ pub fn next_repelbone_locs(entity: &Entity, bone: &RepelBone) -> (Vector2D, Vect
     )
 }
 
-pub fn next_standardbone_locs(entity: &Entity, bone: &StandardBone) -> (Vector2D, Vector2D) {
-    let p1 = entity.point_at(bone.p1).expect("no p1 found");
-    let p2 = entity.point_at(bone.p2).expect("no p2 found");
+pub fn next_standardbone_locs(
+    bone: &StandardBone,
+    point_map: &HashMap<PointIndex, PhysicsPoint>,
+) -> (Vector2D, Vector2D) {
+    let p1 = point_map.get(&bone.p1).expect("no p1 found");
+    let p2 = point_map.get(&bone.p2).expect("no p2 found");
 
     let diff = p2.location - p1.location;
     let length = diff.length_squared().sqrt();

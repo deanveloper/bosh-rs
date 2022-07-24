@@ -8,30 +8,6 @@ pub enum LineType {
     Scenery,
 }
 
-impl LineType {
-    pub fn is_normal(&self) -> bool {
-        if let LineType::Normal = self {
-            true
-        } else {
-            false
-        }
-    }
-    pub fn is_accelerate(&self) -> bool {
-        if let LineType::Accelerate { .. } = self {
-            true
-        } else {
-            false
-        }
-    }
-    pub fn is_scenery(&self) -> bool {
-        if let LineType::Scenery = self {
-            true
-        } else {
-            false
-        }
-    }
-}
-
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Line {
     pub flipped: bool,

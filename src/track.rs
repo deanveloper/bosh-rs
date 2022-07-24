@@ -23,7 +23,7 @@ impl Track {
             }
             hitbox_extensions.insert(
                 *line,
-                Track::calculate_hitbox_extensions_for_line(line, &lines),
+                Track::calculate_hitbox_extensions_for_line(line, lines),
             );
         }
 

@@ -1,5 +1,3 @@
-use std::hash::{Hash, Hasher};
-
 use crate::rider::entities::PointIndex;
 
 pub trait Bone {}
@@ -40,27 +38,3 @@ impl Bone for RepelBone {}
 /// A joint is a bone which tries to hold a 90 degree angle between its two bones.
 /// Or I think that's what a joint is. I'm still not quite sure, I'll find out later.
 pub struct Joint<T: Bone>(pub T, pub T);
-
-/// an unordered tuple of points
-#[derive(Copy, Clone)]
-pub struct BoneMapKey(PointIndex, PointIndex);
-
-impl Hash for BoneMapKey {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        Ord::min(self.0, self.1).hash(state);
-        Ord::max(self.0, self.1).hash(state);
-    }
-}
-
-impl PartialEq for BoneMapKey {
-    fn eq(&self, other: &Self) -> bool {
-        let s_min = Ord::min(self.0, self.1);
-        let s_max = Ord::max(self.0, self.1);
-        let o_min = Ord::min(other.0, other.1);
-        let o_max = Ord::max(other.0, other.1);
-
-        s_min == o_min && s_max == o_max
-    }
-}
-
-impl Eq for BoneMapKey {}
