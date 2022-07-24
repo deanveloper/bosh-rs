@@ -1,6 +1,8 @@
 use crate::rider::entities::PointIndex;
 
-pub trait Bone {}
+pub trait Bone {
+    fn points(&self) -> (PointIndex, PointIndex);
+}
 
 /// A standard bone is one which simply holds two points together.
 #[derive(Clone, Debug, PartialEq)]
@@ -31,9 +33,21 @@ pub struct RepelBone {
     pub resting_length: f64,
 }
 
-impl Bone for StandardBone {}
-impl Bone for MounterBone {}
-impl Bone for RepelBone {}
+impl Bone for StandardBone {
+    fn points(&self) -> (PointIndex, PointIndex) {
+        (self.p1, self.p2)
+    }
+}
+impl Bone for MounterBone {
+    fn points(&self) -> (PointIndex, PointIndex) {
+        (self.p1, self.p2)
+    }
+}
+impl Bone for RepelBone {
+    fn points(&self) -> (PointIndex, PointIndex) {
+        (self.p1, self.p2)
+    }
+}
 
 /// A joint is a bone which tries to hold a 90 degree angle between its two bones.
 /// Or I think that's what a joint is. I'm still not quite sure, I'll find out later.

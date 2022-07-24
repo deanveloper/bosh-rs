@@ -1,5 +1,5 @@
 use crate::physics::line_physics::PhysicsPoint;
-use crate::rider::bone::{RepelBone, StandardBone};
+use crate::rider::bone::{Bone, RepelBone, StandardBone};
 use crate::rider::entities::{Entity, PointIndex};
 use crate::vector::Vector2D;
 use std::collections::HashMap;
@@ -9,48 +9,42 @@ pub fn apply_gravity(_rider: &Entity) {}
 pub fn update_bones(rider: &mut Entity) {
     match rider {
         Entity::Bosh(bosh) => {
-            let bones = bosh.bones.clone();
-            for bone in bones {
-                let (p1, p2) = next_standardbone_locs(&bone, &bosh.points);
+            let standard_bones = bosh.bones.clone();
+            next_bone_locs(&standard_bones, &mut bosh.points, next_standardbone_locs);
 
-                let points = &mut bosh.points;
-                if let Some(p) = points.get_mut(&bone.p1) {
-                    p.location = p1
-                }
-                if let Some(p) = points.get_mut(&bone.p2) {
-                    p.location = p2
-                }
-            }
             let repel_bones = bosh.repel_bones.clone();
-            for repel in repel_bones {
-                let (p1, p2) = next_repelbone_locs(&repel, &bosh.points);
-
-                let points = &mut bosh.points;
-                if let Some(p) = points.get_mut(&repel.p1) {
-                    p.location = p1
-                }
-                if let Some(p) = points.get_mut(&repel.p2) {
-                    p.location = p2
-                }
-            }
+            next_bone_locs(&repel_bones, &mut bosh.points, next_repelbone_locs);
         }
         Entity::Sled(sled) => {
-            let bones = sled.bones.clone();
-            for bone in bones {
-                let (p1, p2) = next_standardbone_locs(&bone, &sled.points);
-
-                let points = &mut sled.points;
-                if let Some(p) = points.get_mut(&bone.p1) {
-                    p.location = p1
-                }
-                if let Some(p) = points.get_mut(&bone.p2) {
-                    p.location = p2
-                }
-            }
+            let standard_bones = sled.bones.clone();
+            next_bone_locs(&standard_bones, &mut sled.points, next_standardbone_locs);
         }
         Entity::BoshSled(bosh_sled) => {
+            // just recursively call on the bosh and the sled
             update_bones(&mut Entity::Bosh(bosh_sled.clone().bosh));
             update_bones(&mut Entity::Sled(bosh_sled.clone().sled));
+        }
+    }
+}
+
+/// Generic wrapper to easily use next_repelbone_locs/next_standardbone_locs
+fn next_bone_locs<T, F>(
+    bones: &Vec<T>,
+    points: &mut HashMap<PointIndex, PhysicsPoint>,
+    next_locs: F,
+) where
+    T: Bone,
+    F: Fn(&T, &HashMap<PointIndex, PhysicsPoint>) -> (Vector2D, Vector2D),
+{
+    for bone in bones {
+        let (i1, i2) = bone.points();
+        let (p1, p2) = next_locs(bone, points);
+
+        if let Some(p) = points.get_mut(&i1) {
+            p.location = p1
+        }
+        if let Some(p) = points.get_mut(&i2) {
+            p.location = p2
         }
     }
 }
