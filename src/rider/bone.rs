@@ -1,129 +1,45 @@
 use std::hash::{Hash, Hasher};
 
-use crate::physics::line_physics::PhysicsPoint;
-use crate::rider::entities::{Entity, PointIndex};
+use crate::rider::entities::PointIndex;
 
-/// Represents a link between two [`PhysicsPoint`]s.
-pub trait Bone {
-    fn standard_length(&self) -> f64;
-    fn points(&self) -> (PhysicsPoint, PhysicsPoint);
-}
+pub trait Bone {}
 
 /// A standard bone is one which simply holds two points together.
 #[derive(Clone, Debug, PartialEq)]
 pub struct StandardBone {
-    pub entity: Entity,
     pub p1: PointIndex,
     pub p2: PointIndex,
 
-    initial_len: f64,
+    pub resting_length: f64,
 }
 
 /// A Mounter is a bone which holds bosh onto his sled.
 #[derive(Clone, Debug, PartialEq)]
 pub struct MounterBone {
-    pub entity: Entity,
     pub p1: PointIndex,
     pub p2: PointIndex,
     pub endurance: f64,
 
-    initial_len: f64,
+    pub resting_length: f64,
 }
 
 /// Repel is a bone which makes sure two points don't get too close to each other.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RepelBone {
-    pub entity: Entity,
     pub p1: PointIndex,
     pub p2: PointIndex,
     pub length_factor: f64,
 
-    initial_len: f64,
+    pub resting_length: f64,
 }
+
+impl Bone for StandardBone {}
+impl Bone for MounterBone {}
+impl Bone for RepelBone {}
 
 /// A joint is a bone which tries to hold a 90 degree angle between its two bones.
 /// Or I think that's what a joint is. I'm still not quite sure, I'll find out later.
 pub struct Joint<T: Bone>(pub T, pub T);
-
-impl StandardBone {
-    pub fn new(entity: Entity, i1: PointIndex, i2: PointIndex) -> StandardBone {
-        let p1 = entity.point_at(i1).expect("StandardBone::new - i1 is None");
-        let p2 = entity.point_at(i2).expect("StandardBone::new - i2 is None");
-
-        StandardBone {
-            entity: entity.clone(),
-            p1: i1,
-            p2: i2,
-            initial_len: (p1.location - p2.location).length_squared().sqrt(),
-        }
-    }
-}
-
-impl MounterBone {
-    pub fn new(entity: Entity, i1: PointIndex, i2: PointIndex, endurance: f64) -> MounterBone {
-        let p1 = entity.point_at(i1).expect("StandardBone::new - i1 is None");
-        let p2 = entity.point_at(i2).expect("StandardBone::new - i2 is None");
-
-        MounterBone {
-            entity: entity.clone(),
-            p1: i1,
-            p2: i2,
-            endurance,
-            initial_len: (p1.location - p2.location).length_squared().sqrt(),
-        }
-    }
-}
-
-impl RepelBone {
-    pub fn new(entity: Entity, i1: PointIndex, i2: PointIndex, length_factor: f64) -> RepelBone {
-        let p1 = entity.point_at(i1).expect("StandardBone::new - i1 is None");
-        let p2 = entity.point_at(i2).expect("StandardBone::new - i2 is None");
-
-        RepelBone {
-            entity: entity.clone(),
-            p1: i1,
-            p2: i2,
-            length_factor,
-            initial_len: (p1.location - p2.location).length_squared().sqrt(),
-        }
-    }
-}
-
-impl Bone for StandardBone {
-    fn standard_length(&self) -> f64 {
-        self.initial_len
-    }
-    fn points(&self) -> (PhysicsPoint, PhysicsPoint) {
-        (
-            self.entity.point_at(self.p1).expect("failed unwrap p1"),
-            self.entity.point_at(self.p2).expect("failed unwrap p2"),
-        )
-    }
-}
-
-impl Bone for MounterBone {
-    fn standard_length(&self) -> f64 {
-        self.initial_len
-    }
-    fn points(&self) -> (PhysicsPoint, PhysicsPoint) {
-        (
-            self.entity.point_at(self.p1).expect("failed unwrap p1"),
-            self.entity.point_at(self.p2).expect("failed unwrap p2"),
-        )
-    }
-}
-
-impl Bone for RepelBone {
-    fn standard_length(&self) -> f64 {
-        self.initial_len * self.length_factor
-    }
-    fn points(&self) -> (PhysicsPoint, PhysicsPoint) {
-        (
-            self.entity.point_at(self.p1).expect("failed unwrap p1"),
-            self.entity.point_at(self.p2).expect("failed unwrap p2"),
-        )
-    }
-}
 
 /// an unordered tuple of points
 #[derive(Copy, Clone)]

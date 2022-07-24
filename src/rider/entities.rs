@@ -58,7 +58,7 @@ impl PointIndex {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Bosh {
     pub points: HashMap<PointIndex, PhysicsPoint>,
 
@@ -66,14 +66,14 @@ pub struct Bosh {
     pub repel_bones: Vec<Box<RepelBone>>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct Sled {
     pub points: HashMap<PointIndex, PhysicsPoint>,
 
     pub bones: Vec<Box<StandardBone>>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug)]
 pub struct BoshSled {
     pub bosh: Rc<RefCell<Bosh>>,
     pub sled: Rc<RefCell<Sled>>,
@@ -103,7 +103,7 @@ impl Bosh {
             repel_bones: vec![],
         }));
 
-        bosh.borrow_mut().bones = make_bone_list(
+        bosh.borrow_mut().bones = make_standard_bones(
             Entity::Bosh(bosh.clone()),
             vec![
                 (PointIndex::BoshShoulder, PointIndex::BoshButt),
@@ -114,20 +114,13 @@ impl Bosh {
                 (PointIndex::BoshShoulder, PointIndex::BoshRightHand),
             ],
         );
-        bosh.borrow_mut().repel_bones = vec![
-            Box::new(RepelBone::new(
-                Entity::Bosh(bosh.clone()),
-                PointIndex::BoshShoulder,
-                PointIndex::BoshLeftFoot,
-                0.5,
-            )),
-            Box::new(RepelBone::new(
-                Entity::Bosh(bosh.clone()),
-                PointIndex::BoshShoulder,
-                PointIndex::BoshRightFoot,
-                0.5,
-            )),
-        ];
+        bosh.borrow_mut().repel_bones = make_repel_bones(
+            Entity::Bosh(bosh.clone()),
+            vec![
+                (PointIndex::BoshShoulder, PointIndex::BoshLeftFoot, 0.5),
+                (PointIndex::BoshShoulder, PointIndex::BoshRightFoot, 0.5),
+            ],
+        );
 
         bosh
     }
@@ -149,7 +142,7 @@ impl Sled {
             bones: vec![],
         }));
 
-        sled.borrow_mut().bones = make_bone_list(
+        sled.borrow_mut().bones = make_standard_bones(
             Entity::Sled(sled.clone()),
             vec![
                 (PointIndex::SledPeg, PointIndex::SledTail),
@@ -179,6 +172,29 @@ impl BoshSled {
     }
 }
 
+impl PartialEq for Bosh {
+    fn eq(&self, other: &Self) -> bool {
+        self.points == other.points
+    }
+}
+impl Eq for Bosh {}
+
+impl PartialEq for Sled {
+    fn eq(&self, other: &Self) -> bool {
+        self.points == other.points
+    }
+}
+impl Eq for Sled {}
+
+impl PartialEq for BoshSled {
+    fn eq(&self, other: &Self) -> bool {
+        self.bosh == other.bosh && self.sled == other.sled
+    }
+}
+impl Eq for BoshSled {}
+
+// ==== PRIVATE UTIL FUNCTIONS ====
+
 fn make_physics_point(loc: Vector2D, friction: f64) -> PhysicsPoint {
     PhysicsPoint {
         previous_location: loc,
@@ -186,10 +202,41 @@ fn make_physics_point(loc: Vector2D, friction: f64) -> PhysicsPoint {
         friction,
     }
 }
+fn length_between(entity: &Entity, p1: PointIndex, p2: PointIndex) -> f64 {
+    (entity.point_at(p2).expect("").location - entity.point_at(p1).expect("").location)
+        .length_squared()
+        .sqrt()
+}
 
-fn make_bone_list(entity: Entity, bones: Vec<(PointIndex, PointIndex)>) -> Vec<Box<StandardBone>> {
+fn make_repel_bones(
+    entity: Entity,
+    bones: Vec<(PointIndex, PointIndex, f64)>,
+) -> Vec<Box<RepelBone>> {
     bones
         .iter()
-        .map(|(p1, p2)| Box::new(StandardBone::new(entity.clone(), *p1, *p2)))
+        .map(|(p1, p2, length_factor)| {
+            Box::new(RepelBone {
+                p1: *p1,
+                p2: *p2,
+                length_factor: *length_factor,
+                resting_length: length_between(&entity, *p1, *p2),
+            })
+        })
+        .collect()
+}
+
+fn make_standard_bones(
+    entity: Entity,
+    bones: Vec<(PointIndex, PointIndex)>,
+) -> Vec<Box<StandardBone>> {
+    bones
+        .iter()
+        .map(|(p1, p2)| {
+            Box::new(StandardBone {
+                p1: *p1,
+                p2: *p2,
+                resting_length: length_between(&entity, *p1, *p2),
+            })
+        })
         .collect()
 }
