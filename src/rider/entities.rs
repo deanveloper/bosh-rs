@@ -131,15 +131,30 @@ impl Default for Bosh {
 
 impl BoshSled {
     pub fn new(bosh: Bosh, sled: Sled) -> BoshSled {
+        let mut points = bosh.points.clone();
+        points.extend(sled.points.clone().into_iter());
+
         BoshSled {
             bosh,
             sled,
-            mounter_bones: BoshSled::default_mounter_bones(),
+            mounter_bones: BoshSled::default_mounter_bones(&points),
         }
     }
 
-    fn default_mounter_bones() -> Vec<MounterBone> {
-        todo!("mounter bones")
+    fn default_mounter_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<MounterBone> {
+        make_mounter_bones(
+            vec![
+                (PointIndex::SledPeg, PointIndex::BoshButt, 0.057),
+                (PointIndex::SledTail, PointIndex::BoshButt, 0.057),
+                (PointIndex::SledNose, PointIndex::BoshButt, 0.057),
+                (PointIndex::BoshShoulder, PointIndex::SledPeg, 0.057),
+                (PointIndex::SledRope, PointIndex::BoshLeftHand, 0.057),
+                (PointIndex::SledRope, PointIndex::BoshRightHand, 0.057),
+                (PointIndex::BoshLeftFoot, PointIndex::SledNose, 0.057),
+                (PointIndex::BoshRightFoot, PointIndex::SledNose, 0.057),
+            ],
+            &points,
+        )
     }
 }
 
@@ -177,13 +192,16 @@ impl Default for Sled {
 
 impl Default for BoshSled {
     fn default() -> BoshSled {
-        let bosh = Default::default();
-        let sled = Default::default();
+        let bosh: Bosh = Default::default();
+        let sled: Sled = Default::default();
+
+        let mut points = bosh.points.clone();
+        points.extend(sled.points.clone().into_iter());
 
         BoshSled {
             bosh,
             sled,
-            mounter_bones: BoshSled::default_mounter_bones(),
+            mounter_bones: BoshSled::default_mounter_bones(&points),
         }
     }
 }
@@ -253,6 +271,21 @@ fn make_standard_bones(
         .map(|(p1, p2)| StandardBone {
             p1: *p1,
             p2: *p2,
+            resting_length: length_between(p1, p2, point_map),
+        })
+        .collect()
+}
+
+fn make_mounter_bones(
+    bones: Vec<(PointIndex, PointIndex, f64)>,
+    point_map: &HashMap<PointIndex, PhysicsPoint>,
+) -> Vec<MounterBone> {
+    bones
+        .iter()
+        .map(|(p1, p2, endurance)| MounterBone {
+            p1: *p1,
+            p2: *p2,
+            endurance: *endurance,
             resting_length: length_between(p1, p2, point_map),
         })
         .collect()
