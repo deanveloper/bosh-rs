@@ -129,6 +129,20 @@ impl Default for Bosh {
     }
 }
 
+impl BoshSled {
+    pub fn new(bosh: Bosh, sled: Sled) -> BoshSled {
+        BoshSled {
+            bosh,
+            sled,
+            mounter_bones: BoshSled::default_mounter_bones(),
+        }
+    }
+
+    fn default_mounter_bones() -> Vec<MounterBone> {
+        todo!("mounter bones")
+    }
+}
+
 impl Default for Sled {
     fn default() -> Sled {
         let peg = make_physics_point(Vector2D(0.0, 0.0), 0.8);
@@ -169,9 +183,8 @@ impl Default for BoshSled {
         BoshSled {
             bosh,
             sled,
-            mounter_bones: vec![],
-        };
-        todo!("mounter bones")
+            mounter_bones: BoshSled::default_mounter_bones(),
+        }
     }
 }
 

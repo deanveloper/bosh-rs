@@ -1,17 +1,19 @@
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::bone::{Bone, RepelBone, StandardBone};
-use crate::rider::entities::{Entity, PointIndex};
+use crate::rider::entities::{BoshSled, Entity, PointIndex};
 use crate::vector::Vector2D;
 use std::collections::HashMap;
 
-pub fn apply_gravity(rider: &mut Entity) {
+pub fn apply_gravity(rider: Entity) -> Entity {
     rider.points();
+
+    todo!()
 }
 
 /// update_bones updates all points in the entity according to bone tension
-pub fn update_bones(rider: &mut Entity) {
+pub fn update_bones(rider: Entity) -> Entity {
     match rider {
-        Entity::Bosh(bosh) => {
+        Entity::Bosh(mut bosh) => {
             let standard_bones = bosh.bones.clone();
             for bone in standard_bones {
                 update_bone(&bone, &mut bosh.points, next_standardbone_locs);
@@ -21,17 +23,33 @@ pub fn update_bones(rider: &mut Entity) {
             for bone in repel_bones {
                 update_bone(&bone, &mut bosh.points, next_repelbone_locs);
             }
+
+            Entity::Bosh(bosh)
         }
-        Entity::Sled(sled) => {
+        Entity::Sled(mut sled) => {
             let standard_bones = sled.bones.clone();
             for bone in standard_bones {
                 update_bone(&bone, &mut sled.points, next_standardbone_locs);
             }
+
+            Entity::Sled(sled)
         }
-        Entity::BoshSled(bosh_sled) => {
+        Entity::BoshSled(mut bosh_sled) => {
             // just recursively call on the bosh and the sled
-            update_bones(&mut Entity::Bosh(bosh_sled.clone().bosh));
-            update_bones(&mut Entity::Sled(bosh_sled.clone().sled));
+            let bosh = Entity::Bosh(bosh_sled.clone().bosh);
+            let sled = Entity::Sled(bosh_sled.clone().sled);
+
+            let bosh = update_bones(bosh);
+            let sled = update_bones(sled);
+
+            if let Entity::Bosh(bosh) = bosh {
+                bosh_sled.bosh = bosh;
+            }
+            if let Entity::Sled(sled) = sled {
+                bosh_sled.sled = sled;
+            }
+
+            Entity::BoshSled(bosh_sled)
         }
     }
 }

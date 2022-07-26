@@ -10,8 +10,8 @@ mod tests {
     #[test]
     fn rider_physics() {
         let original_bosh = Entity::Bosh(Bosh::default());
-        let mut new_bosh = original_bosh.clone();
-        update_bones(&mut new_bosh);
+        let new_bosh = original_bosh.clone();
+        let new_bosh = update_bones(new_bosh);
 
         assert_eq!(
             original_bosh, new_bosh,
