@@ -153,7 +153,7 @@ impl BoshSled {
                 (PointIndex::BoshLeftFoot, PointIndex::SledNose, 0.057),
                 (PointIndex::BoshRightFoot, PointIndex::SledNose, 0.057),
             ],
-            &points,
+            points,
         )
     }
 }

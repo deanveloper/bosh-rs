@@ -1,6 +1,6 @@
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::bone::{Bone, RepelBone, StandardBone};
-use crate::rider::entities::{BoshSled, Entity, PointIndex};
+use crate::rider::entities::{Entity, PointIndex};
 use crate::vector::Vector2D;
 use std::collections::HashMap;
 
