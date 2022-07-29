@@ -1,5 +1,3 @@
-extern crate core;
-
 pub mod frame;
 pub mod line;
 pub mod physics;

@@ -4,14 +4,14 @@ pub mod rider_physics;
 
 #[cfg(test)]
 mod tests {
-    use crate::physics::rider_physics::update_bones;
-    use crate::rider::entities::{Bosh, Entity};
+    use crate::physics::rider_physics::PhysicsEntity;
+    use crate::rider::entities::Bosh;
 
     #[test]
-    fn rider_physics() {
-        let original_bosh = Entity::Bosh(Bosh::default());
+    fn rider_physics_bosh_at_rest() {
+        let original_bosh = Bosh::default();
         let new_bosh = original_bosh.clone();
-        let new_bosh = update_bones(new_bosh);
+        let new_bosh = new_bosh.apply_bones().unwrap_same();
 
         assert_eq!(
             original_bosh, new_bosh,

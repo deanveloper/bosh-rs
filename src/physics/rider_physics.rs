@@ -1,61 +1,104 @@
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::bone::{Bone, RepelBone, StandardBone};
-use crate::rider::entities::{Entity, PointIndex};
+use crate::rider::entities::{Bosh, BoshSled, PointIndex, Sled};
 use crate::vector::Vector2D;
 use std::collections::HashMap;
 
-pub fn apply_gravity(rider: Entity) -> Entity {
-    rider.points();
-
-    todo!()
+pub trait PhysicsEntity
+where
+    Self: Sized,
+{
+    fn apply_bones(self) -> UpdateBonesResult<Self>;
+    fn apply_gravity(self, accel: Vector2D) -> Self;
 }
 
-/// update_bones updates all points in the entity according to bone tension
-pub fn update_bones(rider: Entity) -> Entity {
-    match rider {
-        Entity::Bosh(mut bosh) => {
-            let standard_bones = bosh.bones.clone();
-            for bone in standard_bones {
-                update_bone(&bone, &mut bosh.points, next_standardbone_locs);
-            }
+pub enum UpdateBonesResult<T: PhysicsEntity> {
+    Same(T),
+    Broken(Bosh, Sled),
+}
 
-            let repel_bones = bosh.repel_bones.clone();
-            for bone in repel_bones {
-                update_bone(&bone, &mut bosh.points, next_repelbone_locs);
-            }
-
-            Entity::Bosh(bosh)
+impl<T: PhysicsEntity> UpdateBonesResult<T> {
+    pub fn unwrap_same(self) -> T {
+        if let UpdateBonesResult::Same(t) = self {
+            t
+        } else {
+            panic!("unwrap_same called on UpdateBonesResult::Broken")
         }
-        Entity::Sled(mut sled) => {
-            let standard_bones = sled.bones.clone();
-            for bone in standard_bones {
-                update_bone(&bone, &mut sled.points, next_standardbone_locs);
-            }
+    }
+}
 
-            Entity::Sled(sled)
+impl PhysicsEntity for Bosh {
+    fn apply_bones(mut self) -> UpdateBonesResult<Self> {
+        for bone in &self.bones {
+            apply_bone(bone, &mut self.points, next_standardbone_locs);
         }
-        Entity::BoshSled(mut bosh_sled) => {
-            // just recursively call on the bosh and the sled
-            let bosh = Entity::Bosh(bosh_sled.clone().bosh);
-            let sled = Entity::Sled(bosh_sled.clone().sled);
 
-            let bosh = update_bones(bosh);
-            let sled = update_bones(sled);
+        for bone in &self.repel_bones {
+            apply_bone(bone, &mut self.points, next_repelbone_locs);
+        }
 
-            if let Entity::Bosh(bosh) = bosh {
-                bosh_sled.bosh = bosh;
-            }
-            if let Entity::Sled(sled) = sled {
-                bosh_sled.sled = sled;
-            }
+        UpdateBonesResult::Same(self)
+    }
 
-            Entity::BoshSled(bosh_sled)
+    fn apply_gravity(mut self, accel: Vector2D) -> Self {
+        for p in self.points.values_mut() {
+            p.velocity += accel;
+        }
+
+        self
+    }
+}
+impl PhysicsEntity for Sled {
+    fn apply_bones(mut self) -> UpdateBonesResult<Self> {
+        for bone in &self.bones {
+            apply_bone(bone, &mut self.points, next_standardbone_locs);
+        }
+
+        UpdateBonesResult::Same(self)
+    }
+
+    fn apply_gravity(mut self, accel: Vector2D) -> Self {
+        for p in self.points.values_mut() {
+            p.velocity += accel;
+        }
+
+        self
+    }
+}
+impl PhysicsEntity for BoshSled {
+    #![allow(unreachable_code, unused_variables)]
+    fn apply_bones(self) -> UpdateBonesResult<Self> {
+        // just recursively call on the bosh and the sled
+        let bosh = self.bosh.apply_bones().unwrap_same();
+        let sled = self.sled.apply_bones().unwrap_same();
+
+        todo!("check mounter bones");
+
+        if todo!("if sled is broken") {
+            UpdateBonesResult::Broken(bosh, sled)
+        } else {
+            UpdateBonesResult::Same(BoshSled {
+                bosh,
+                sled,
+                mounter_bones: self.mounter_bones,
+            })
+        }
+    }
+
+    fn apply_gravity(self, accel: Vector2D) -> Self {
+        let bosh = self.bosh.apply_gravity(accel);
+        let sled = self.sled.apply_gravity(accel);
+
+        BoshSled {
+            bosh,
+            sled,
+            mounter_bones: self.mounter_bones,
         }
     }
 }
 
 /// Generic wrapper to easily use next_repelbone_locs/next_standardbone_locs
-fn update_bone<T, F>(bone: &T, points: &mut HashMap<PointIndex, PhysicsPoint>, next_locs: F)
+fn apply_bone<T, F>(bone: &T, points: &mut HashMap<PointIndex, PhysicsPoint>, next_locs: F)
 where
     T: Bone,
     F: Fn(&T, &HashMap<PointIndex, PhysicsPoint>) -> (Vector2D, Vector2D),
