@@ -66,7 +66,7 @@ impl PhysicsEntity for Sled {
     }
 }
 impl PhysicsEntity for BoshSled {
-    #![allow(unreachable_code, unused_variables)]
+    #[allow(unreachable_code, unused_variables)]
     fn apply_bones(self) -> UpdateBonesResult<Self> {
         // just recursively call on the bosh and the sled
         let bosh = self.bosh.apply_bones().unwrap_same();
