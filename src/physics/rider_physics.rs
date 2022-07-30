@@ -1,13 +1,14 @@
+use crate::physics::bone_physics::PhysicsBone;
 use crate::physics::line_physics::PhysicsPoint;
-use crate::rider::bone::{Bone, RepelBone, StandardBone};
 use crate::rider::entities::{Bosh, BoshSled, PointIndex, Sled};
 use crate::vector::Vector2D;
-use std::collections::HashMap;
 
 pub trait PhysicsEntity
 where
     Self: Sized,
 {
+    fn point_at(&self, index: PointIndex) -> PhysicsPoint;
+    fn point_at_mut(&mut self, index: PointIndex) -> &mut PhysicsPoint;
     fn apply_bones(self) -> UpdateBonesResult<Self>;
     fn apply_gravity(self, accel: Vector2D) -> Self;
 }
@@ -28,16 +29,36 @@ impl<T: PhysicsEntity> UpdateBonesResult<T> {
 }
 
 impl PhysicsEntity for Bosh {
-    fn apply_bones(mut self) -> UpdateBonesResult<Self> {
-        for bone in &self.bones {
-            apply_bone(bone, &mut self.points, next_standardbone_locs);
+    fn point_at(&self, index: PointIndex) -> PhysicsPoint {
+        self.points
+            .get(&index)
+            .copied()
+            .unwrap_or_else(|| panic!("invalid index {index:?}"))
+    }
+
+    fn point_at_mut(&mut self, index: PointIndex) -> &mut PhysicsPoint {
+        self.points
+            .get_mut(&index)
+            .unwrap_or_else(|| panic!("invalid index {index:?}"))
+    }
+
+    fn apply_bones(self) -> UpdateBonesResult<Self> {
+        let mut entity = self;
+        for bone in &entity.bones.clone() {
+            if let Some((p1, p2)) = bone.next_locations(&entity) {
+                entity.point_at_mut(bone.p1).location = p1;
+                entity.point_at_mut(bone.p2).location = p2;
+            }
         }
 
-        for bone in &self.repel_bones {
-            apply_bone(bone, &mut self.points, next_repelbone_locs);
+        for bone in &entity.repel_bones.clone() {
+            if let Some((p1, p2)) = bone.next_locations(&entity) {
+                entity.point_at_mut(bone.p1).location = p1;
+                entity.point_at_mut(bone.p2).location = p2;
+            }
         }
 
-        UpdateBonesResult::Same(self)
+        UpdateBonesResult::Same(entity)
     }
 
     fn apply_gravity(mut self, accel: Vector2D) -> Self {
@@ -49,12 +70,29 @@ impl PhysicsEntity for Bosh {
     }
 }
 impl PhysicsEntity for Sled {
-    fn apply_bones(mut self) -> UpdateBonesResult<Self> {
-        for bone in &self.bones {
-            apply_bone(bone, &mut self.points, next_standardbone_locs);
+    fn point_at(&self, index: PointIndex) -> PhysicsPoint {
+        self.points
+            .get(&index)
+            .copied()
+            .unwrap_or_else(|| panic!("invalid index {index:?}"))
+    }
+
+    fn point_at_mut(&mut self, index: PointIndex) -> &mut PhysicsPoint {
+        self.points
+            .get_mut(&index)
+            .unwrap_or_else(|| panic!("invalid index {index:?}"))
+    }
+
+    fn apply_bones(self) -> UpdateBonesResult<Self> {
+        let mut entity = self;
+        for bone in &entity.bones.clone() {
+            if let Some((p1, p2)) = bone.next_locations(&entity) {
+                entity.point_at_mut(bone.p1).location = p1;
+                entity.point_at_mut(bone.p2).location = p2;
+            }
         }
 
-        UpdateBonesResult::Same(self)
+        UpdateBonesResult::Same(entity)
     }
 
     fn apply_gravity(mut self, accel: Vector2D) -> Self {
@@ -66,21 +104,45 @@ impl PhysicsEntity for Sled {
     }
 }
 impl PhysicsEntity for BoshSled {
-    #[allow(unreachable_code, unused_variables)]
+    fn point_at(&self, index: PointIndex) -> PhysicsPoint {
+        if index.is_bosh() {
+            self.bosh.point_at(index)
+        } else {
+            self.sled.point_at(index)
+        }
+    }
+
+    fn point_at_mut(&mut self, index: PointIndex) -> &mut PhysicsPoint {
+        if index.is_bosh() {
+            self.bosh.point_at_mut(index)
+        } else {
+            self.sled.point_at_mut(index)
+        }
+    }
+
     fn apply_bones(self) -> UpdateBonesResult<Self> {
-        // just recursively call on the bosh and the sled
-        let bosh = self.bosh.apply_bones().unwrap_same();
-        let sled = self.sled.apply_bones().unwrap_same();
+        let mut entity = self;
 
-        todo!("check mounter bones");
+        entity.bosh = entity.bosh.apply_bones().unwrap_same();
+        entity.sled = entity.sled.apply_bones().unwrap_same();
 
-        if todo!("if sled is broken") {
-            UpdateBonesResult::Broken(bosh, sled)
+        let mut broken = false;
+        for bone in entity.mounter_bones.clone().iter() {
+            if let Some((p1, p2)) = bone.next_locations(&entity) {
+                entity.point_at_mut(bone.p1).location = p1;
+                entity.point_at_mut(bone.p2).location = p2;
+            } else {
+                broken = true;
+            }
+        }
+
+        if broken {
+            UpdateBonesResult::Broken(entity.bosh, entity.sled)
         } else {
             UpdateBonesResult::Same(BoshSled {
-                bosh,
-                sled,
-                mounter_bones: self.mounter_bones,
+                bosh: entity.bosh,
+                sled: entity.sled,
+                mounter_bones: entity.mounter_bones,
             })
         }
     }
@@ -94,74 +156,5 @@ impl PhysicsEntity for BoshSled {
             sled,
             mounter_bones: self.mounter_bones,
         }
-    }
-}
-
-/// Generic wrapper to easily use next_repelbone_locs/next_standardbone_locs
-fn apply_bone<T, F>(bone: &T, points: &mut HashMap<PointIndex, PhysicsPoint>, next_locs: F)
-where
-    T: Bone,
-    F: Fn(&T, &HashMap<PointIndex, PhysicsPoint>) -> (Vector2D, Vector2D),
-{
-    let (i1, i2) = bone.points();
-    let (p1, p2) = next_locs(bone, points);
-
-    if let Some(p) = points.get_mut(&i1) {
-        p.location = p1
-    }
-    if let Some(p) = points.get_mut(&i2) {
-        p.location = p2
-    }
-}
-
-pub fn next_repelbone_locs(
-    bone: &RepelBone,
-    point_map: &HashMap<PointIndex, PhysicsPoint>,
-) -> (Vector2D, Vector2D) {
-    let p1 = point_map.get(&bone.p1).expect("no p1 found");
-    let p2 = point_map.get(&bone.p2).expect("no p2 found");
-
-    let diff = p2.location - p1.location;
-    let length = diff.length_squared().sqrt();
-
-    if length >= bone.resting_length * bone.length_factor {
-        return (p1.location, p2.location);
-    }
-
-    stick_resolve(
-        p1.location,
-        p2.location,
-        get_diff(bone.resting_length * bone.length_factor * 0.5, length),
-    )
-}
-
-pub fn next_standardbone_locs(
-    bone: &StandardBone,
-    point_map: &HashMap<PointIndex, PhysicsPoint>,
-) -> (Vector2D, Vector2D) {
-    let p1 = point_map.get(&bone.p1).expect("no p1 found");
-    let p2 = point_map.get(&bone.p2).expect("no p2 found");
-
-    let diff = p2.location - p1.location;
-    let length = diff.length_squared().sqrt();
-
-    stick_resolve(
-        p1.location,
-        p2.location,
-        get_diff(bone.resting_length, length),
-    )
-}
-
-fn stick_resolve(p1: Vector2D, p2: Vector2D, diff: f64) -> (Vector2D, Vector2D) {
-    let delta = (p1 - p2) * diff;
-
-    (p1 - delta, delta + p2)
-}
-
-fn get_diff(standard_length: f64, current_length: f64) -> f64 {
-    if current_length == 0.0 {
-        0.0
-    } else {
-        (current_length - standard_length) / current_length
     }
 }

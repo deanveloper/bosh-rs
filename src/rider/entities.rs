@@ -56,7 +56,7 @@ pub enum PointIndex {
 }
 
 impl PointIndex {
-    fn is_bosh(&self) -> bool {
+    pub fn is_bosh(&self) -> bool {
         &PointIndex::BoshLeftFoot <= self && self <= &PointIndex::BoshButt
     }
 }
