@@ -1,16 +1,28 @@
 use crate::physics::bone_physics::PhysicsBone;
+use crate::physics::line_physics;
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::entities::{Bosh, BoshSled, PointIndex, Sled};
+use crate::track::Track;
 use crate::vector::Vector2D;
 
 pub trait PhysicsEntity
 where
     Self: Sized,
 {
+    fn mutate_points<F: FnMut(&mut PhysicsPoint)>(&mut self, mapper: F);
     fn point_at(&self, index: PointIndex) -> PhysicsPoint;
     fn point_at_mut(&mut self, index: PointIndex) -> &mut PhysicsPoint;
+
+    /// Moves self because BoshSleds may break and become unusable.
     fn apply_bones(self) -> UpdateBonesResult<Self>;
-    fn apply_gravity(self, accel: Vector2D) -> Self;
+
+    fn apply_gravity(&mut self, accel: Vector2D) {
+        self.mutate_points(|p| p.velocity += accel);
+    }
+
+    fn apply_gravity_wells(&mut self, track: &Track) {
+        self.mutate_points(|p| *p = line_physics::update_position(*p, track))
+    }
 }
 
 pub enum UpdateBonesResult<T: PhysicsEntity> {
@@ -29,6 +41,10 @@ impl<T: PhysicsEntity> UpdateBonesResult<T> {
 }
 
 impl PhysicsEntity for Bosh {
+    fn mutate_points<F: FnMut(&mut PhysicsPoint)>(&mut self, mapper: F) {
+        self.points.values_mut().for_each(mapper);
+    }
+
     fn point_at(&self, index: PointIndex) -> PhysicsPoint {
         self.points
             .get(&index)
@@ -60,16 +76,12 @@ impl PhysicsEntity for Bosh {
 
         UpdateBonesResult::Same(entity)
     }
-
-    fn apply_gravity(mut self, accel: Vector2D) -> Self {
-        for p in self.points.values_mut() {
-            p.velocity += accel;
-        }
-
-        self
-    }
 }
 impl PhysicsEntity for Sled {
+    fn mutate_points<F: FnMut(&mut PhysicsPoint)>(&mut self, mapper: F) {
+        self.points.values_mut().for_each(mapper);
+    }
+
     fn point_at(&self, index: PointIndex) -> PhysicsPoint {
         self.points
             .get(&index)
@@ -94,16 +106,15 @@ impl PhysicsEntity for Sled {
 
         UpdateBonesResult::Same(entity)
     }
-
-    fn apply_gravity(mut self, accel: Vector2D) -> Self {
-        for p in self.points.values_mut() {
-            p.velocity += accel;
-        }
-
-        self
-    }
 }
 impl PhysicsEntity for BoshSled {
+    fn mutate_points<F: FnMut(&mut PhysicsPoint)>(&mut self, mapper: F) {
+        let mut points = self.bosh.points.clone();
+        points.extend(&self.sled.points);
+
+        points.values_mut().for_each(mapper);
+    }
+
     fn point_at(&self, index: PointIndex) -> PhysicsPoint {
         if index.is_bosh() {
             self.bosh.point_at(index)
@@ -144,17 +155,6 @@ impl PhysicsEntity for BoshSled {
                 sled: entity.sled,
                 mounter_bones: entity.mounter_bones,
             })
-        }
-    }
-
-    fn apply_gravity(self, accel: Vector2D) -> Self {
-        let bosh = self.bosh.apply_gravity(accel);
-        let sled = self.sled.apply_gravity(accel);
-
-        BoshSled {
-            bosh,
-            sled,
-            mounter_bones: self.mounter_bones,
         }
     }
 }
