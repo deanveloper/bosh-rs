@@ -110,7 +110,7 @@ impl Sub for Vector2D {
     type Output = Vector2D;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Vector2D(self.0 + rhs.0, self.1 + rhs.1)
+        Vector2D(self.0 - rhs.0, self.1 - rhs.1)
     }
 }
 
