@@ -5,6 +5,8 @@ pub mod rider;
 pub mod track;
 pub mod vector;
 
+mod grid;
+
 #[cfg(test)]
 mod tests {
     #[test]

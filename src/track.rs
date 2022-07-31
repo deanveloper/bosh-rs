@@ -1,15 +1,18 @@
+use crate::grid::grid::Grid;
 use crate::line::{Line, LineType};
 use crate::physics::line_physics::PhysicsPoint;
 use crate::vector::Vector2D;
 use std::collections::HashMap;
 
-const MAX_FORCE_LENGTH: f64 = 10.0;
+const GRAVITY_WELL_HEIGHT: f64 = 10.0;
 const EXTENSION_RATIO: f64 = 0.25;
 
 /// A track in linerider.
 pub struct Track {
     pub start: Vector2D,
     pub lines: Box<Vec<Line>>,
+
+    grid: Grid,
 
     hitbox_extensions: HashMap<Line, (f64, f64)>,
 }
@@ -30,6 +33,7 @@ impl Track {
         Track {
             start,
             lines: Box::new(lines.clone()),
+            grid: Default::default(),
             hitbox_extensions,
         }
     }
@@ -41,7 +45,7 @@ impl Track {
 
         self.lines
             .iter()
-            .flat_map(|l| [l.points.0, l.points.1])
+            .flat_map(|l| [l.ends.0, l.ends.1])
             .map(|p| (p, p.distance_squared(to_snap)))
             .filter(|(_, dist)| dist.total_cmp(&max_dist_sq).is_lt())
             .min_by(|(_, d1), (_, d2)| d1.total_cmp(d2))
@@ -57,7 +61,7 @@ impl Track {
     ///  * the point is moving "upward"
     ///  * the point is outside of the line, including extensions
     pub fn distance_below_line(&self, line: &Line, point: PhysicsPoint) -> f64 {
-        let (start, end) = line.points;
+        let (start, end) = line.ends;
         let line_vec = end - start;
         let point_from_start = point.location - start;
         let is_moving_into_line = {
@@ -84,7 +88,7 @@ impl Track {
         }
 
         let distance_below = point_from_start.dot_product(line_normalized.rotate90_right());
-        if 0f64 < distance_below && distance_below < MAX_FORCE_LENGTH {
+        if 0f64 < distance_below && distance_below < GRAVITY_WELL_HEIGHT {
             distance_below
         } else {
             0f64
@@ -102,18 +106,18 @@ impl Track {
             if other.line_type == LineType::Scenery {
                 continue;
             }
-            if line.points.0 == other.points.0 && line.points.1 == other.points.1 {
+            if line.ends.0 == other.ends.0 && line.ends.1 == other.ends.1 {
                 continue;
             }
 
             // if the left side is connected...
-            if line.points.0 == other.points.0 || line.points.0 == other.points.1 {
-                p0_extension = f64::min(EXTENSION_RATIO, MAX_FORCE_LENGTH / length);
+            if line.ends.0 == other.ends.0 || line.ends.0 == other.ends.1 {
+                p0_extension = f64::min(EXTENSION_RATIO, GRAVITY_WELL_HEIGHT / length);
             }
 
             // if the right side is connected...
-            if line.points.1 == other.points.0 || line.points.1 == other.points.1 {
-                p1_extension = f64::min(EXTENSION_RATIO, MAX_FORCE_LENGTH / length);
+            if line.ends.1 == other.ends.0 || line.ends.1 == other.ends.1 {
+                p1_extension = f64::min(EXTENSION_RATIO, GRAVITY_WELL_HEIGHT / length);
             }
         }
 
@@ -126,6 +130,7 @@ impl Clone for Track {
         Track {
             start: self.start,
             lines: self.lines.clone(),
+            grid: self.grid.clone(),
             hitbox_extensions: self.hitbox_extensions.clone(),
         }
     }
