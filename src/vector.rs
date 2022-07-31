@@ -24,7 +24,7 @@ impl Vector2D {
 
     /// Returns the dot product of the two vectors.
     pub fn dot_product(self, rhs: Vector2D) -> f64 {
-        self.0 * rhs.0 + self.1 + rhs.1
+        self.0 * rhs.0 + self.1 * rhs.1
     }
 
     /// Returns the length of this vector projected onto `other`.
