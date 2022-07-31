@@ -14,7 +14,21 @@ where
     fn point_at_mut(&mut self, index: PointIndex) -> &mut PhysicsPoint;
 
     /// Moves self because BoshSleds may break and become unusable.
-    fn apply_bones(self) -> UpdateBonesResult<Self>;
+    fn apply_bones<B: PhysicsBone>(self, bones: &Vec<B>) -> UpdateBonesResult<Self> {
+        let mut entity = self;
+        for bone in bones {
+            if let Some((p1, p2)) = bone.next_locations(&entity) {
+                let (i1, i2) = bone.points();
+                entity.point_at_mut(i1).location = p1;
+                entity.point_at_mut(i2).location = p2;
+            }
+        }
+
+        UpdateBonesResult::Same(entity)
+    }
+
+    /// Moves self because BoshSleds may break and become unusable.
+    fn apply_all_bones(self) -> UpdateBonesResult<Self>;
 
     fn apply_gravity(&mut self, accel: Vector2D) {
         self.mutate_points(|p| p.velocity += accel);
@@ -58,23 +72,16 @@ impl PhysicsEntity for Bosh {
             .unwrap_or_else(|| panic!("invalid index {index:?}"))
     }
 
-    fn apply_bones(self) -> UpdateBonesResult<Self> {
-        let mut entity = self;
-        for bone in &entity.bones.clone() {
-            if let Some((p1, p2)) = bone.next_locations(&entity) {
-                entity.point_at_mut(bone.p1).location = p1;
-                entity.point_at_mut(bone.p2).location = p2;
-            }
-        }
+    fn apply_all_bones(self) -> UpdateBonesResult<Self> {
+        let mut this = self;
 
-        for bone in &entity.repel_bones.clone() {
-            if let Some((p1, p2)) = bone.next_locations(&entity) {
-                entity.point_at_mut(bone.p1).location = p1;
-                entity.point_at_mut(bone.p2).location = p2;
-            }
-        }
+        let standard_bones = &this.standard_bones.clone();
+        this = this.apply_bones(standard_bones).unwrap_same();
 
-        UpdateBonesResult::Same(entity)
+        let repel_bones = &this.standard_bones.clone();
+        this = this.apply_bones(repel_bones).unwrap_same();
+
+        UpdateBonesResult::Same(this)
     }
 }
 impl PhysicsEntity for Sled {
@@ -95,16 +102,13 @@ impl PhysicsEntity for Sled {
             .unwrap_or_else(|| panic!("invalid index {index:?}"))
     }
 
-    fn apply_bones(self) -> UpdateBonesResult<Self> {
-        let mut entity = self;
-        for bone in &entity.bones.clone() {
-            if let Some((p1, p2)) = bone.next_locations(&entity) {
-                entity.point_at_mut(bone.p1).location = p1;
-                entity.point_at_mut(bone.p2).location = p2;
-            }
-        }
+    fn apply_all_bones(self) -> UpdateBonesResult<Self> {
+        let mut this = self;
 
-        UpdateBonesResult::Same(entity)
+        let standard_bones = &this.standard_bones.clone();
+        this = this.apply_bones(standard_bones).unwrap_same();
+
+        UpdateBonesResult::Same(this)
     }
 }
 impl PhysicsEntity for BoshSled {
@@ -131,17 +135,16 @@ impl PhysicsEntity for BoshSled {
         }
     }
 
-    fn apply_bones(self) -> UpdateBonesResult<Self> {
+    fn apply_bones<B: PhysicsBone>(self, bones: &Vec<B>) -> UpdateBonesResult<Self> {
         let mut entity = self;
 
-        entity.bosh = entity.bosh.apply_bones().unwrap_same();
-        entity.sled = entity.sled.apply_bones().unwrap_same();
-
         let mut broken = false;
-        for bone in entity.mounter_bones.clone().iter() {
+
+        for bone in bones {
             if let Some((p1, p2)) = bone.next_locations(&entity) {
-                entity.point_at_mut(bone.p1).location = p1;
-                entity.point_at_mut(bone.p2).location = p2;
+                let (i1, i2) = bone.points();
+                entity.point_at_mut(i1).location = p1;
+                entity.point_at_mut(i2).location = p2;
             } else {
                 broken = true;
             }
@@ -153,8 +156,48 @@ impl PhysicsEntity for BoshSled {
             UpdateBonesResult::Same(BoshSled {
                 bosh: entity.bosh,
                 sled: entity.sled,
-                mounter_bones: entity.mounter_bones,
+                sled_mounter_bones: entity.sled_mounter_bones,
+                bosh_mounter_bones: entity.bosh_mounter_bones,
             })
+        }
+    }
+
+    fn apply_all_bones(self) -> UpdateBonesResult<Self> {
+        let mut this = self;
+
+        let mut broken = false;
+
+        let standard_bones = &this.sled.standard_bones.clone();
+        this = this.apply_bones(standard_bones).unwrap_same();
+
+        let mounter_bones = &this.sled_mounter_bones.clone();
+        this = match this.apply_bones(mounter_bones) {
+            UpdateBonesResult::Same(bosh_sled) => bosh_sled,
+            UpdateBonesResult::Broken(bosh, sled) => {
+                broken = true;
+                BoshSled::new(bosh, sled)
+            }
+        };
+
+        let standard_bones = &this.bosh.standard_bones.clone();
+        this = this.apply_bones(standard_bones).unwrap_same();
+
+        let mounter_bones = &this.bosh_mounter_bones.clone();
+        this = match this.apply_bones(mounter_bones) {
+            UpdateBonesResult::Same(bosh_sled) => bosh_sled,
+            UpdateBonesResult::Broken(bosh, sled) => {
+                broken = true;
+                BoshSled::new(bosh, sled)
+            }
+        };
+
+        let repel_bones = &this.bosh.repel_bones.clone();
+        this = this.apply_bones(repel_bones).unwrap_same();
+
+        if broken {
+            UpdateBonesResult::Broken(this.bosh, this.sled)
+        } else {
+            UpdateBonesResult::Same(this)
         }
     }
 }

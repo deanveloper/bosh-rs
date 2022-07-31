@@ -6,18 +6,18 @@ pub mod rider_physics;
 #[cfg(test)]
 mod tests {
     use crate::physics::rider_physics::PhysicsEntity;
-    use crate::rider::entities::Bosh;
+    use crate::rider::entities::BoshSled;
 
     #[test]
-    fn rider_physics_bosh_at_rest() {
-        let original_bosh = Bosh::default();
-        let new_bosh = original_bosh.clone();
-        let new_bosh = new_bosh.apply_bones().unwrap_same();
+    fn rider_physics_bosh_sled_at_rest() {
+        let original_bosh_sled = BoshSled::default();
+        let new_bosh_sled = original_bosh_sled.clone();
+        let new_bosh_sled = new_bosh_sled.apply_all_bones().unwrap_same();
 
         assert_eq!(
-            original_bosh, new_bosh,
+            original_bosh_sled, new_bosh_sled,
             "should be equal: {:?}, {:?}",
-            original_bosh, new_bosh,
+            original_bosh_sled, new_bosh_sled,
         );
     }
 }

@@ -2,26 +2,10 @@ use crate::physics::rider_physics::PhysicsEntity;
 use crate::rider::bone::{Bone, MounterBone, RepelBone, StandardBone};
 use crate::vector::Vector2D;
 
-pub trait PhysicsBone {
+pub trait PhysicsBone: Bone {
     /// Returns Some((p1, p2)) for the bone-bounded locations, or None if the bone should break.
     /// Noteworthy that only MounterBones are breakable.
     fn next_locations<E: PhysicsEntity>(&self, entity: &E) -> Option<(Vector2D, Vector2D)>;
-}
-
-/// Generic wrapper to easily use next_repelbone_locs/next_standardbone_locs
-pub fn apply_bone<T, E, F>(bone: &T, mut entity: E, next_locs: F) -> E
-where
-    T: Bone,
-    E: PhysicsEntity,
-    F: Fn(&T, &E) -> (Vector2D, Vector2D),
-{
-    let (i1, i2) = bone.points();
-    let (p1, p2) = next_locs(bone, &entity);
-
-    entity.point_at_mut(i1).location = p1;
-    entity.point_at_mut(i2).location = p2;
-
-    entity
 }
 
 impl PhysicsBone for StandardBone {

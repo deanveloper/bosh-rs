@@ -12,34 +12,6 @@ pub enum Entity {
     BoshSled(BoshSled),
 }
 
-impl Entity {
-    pub fn points(&self) -> Vec<PhysicsPoint> {
-        match self {
-            Entity::Bosh(bosh) => bosh.points.values().copied().collect(),
-            Entity::Sled(sled) => sled.points.values().copied().collect(),
-            Entity::BoshSled(bosh_sled) => {
-                let bosh_points = bosh_sled.bosh.points.values();
-                let sled_points = bosh_sled.sled.points.values();
-
-                Iterator::chain(bosh_points, sled_points).copied().collect()
-            }
-        }
-    }
-    pub fn point_at(&self, index: PointIndex) -> Option<PhysicsPoint> {
-        match self {
-            Entity::Bosh(bosh) => bosh.points.get(&index).copied(),
-            Entity::Sled(sled) => sled.points.get(&index).copied(),
-            Entity::BoshSled(bosh_sled) => {
-                if index.is_bosh() {
-                    bosh_sled.bosh.points.get(&index).copied()
-                } else {
-                    bosh_sled.sled.points.get(&index).copied()
-                }
-            }
-        }
-    }
-}
-
 #[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
 pub enum PointIndex {
     BoshLeftFoot = 0,
@@ -65,7 +37,7 @@ impl PointIndex {
 pub struct Bosh {
     pub points: HashMap<PointIndex, PhysicsPoint>,
 
-    pub bones: Vec<StandardBone>,
+    pub standard_bones: Vec<StandardBone>,
     pub repel_bones: Vec<RepelBone>,
 }
 
@@ -73,7 +45,7 @@ pub struct Bosh {
 pub struct Sled {
     pub points: HashMap<PointIndex, PhysicsPoint>,
 
-    pub bones: Vec<StandardBone>,
+    pub standard_bones: Vec<StandardBone>,
 }
 
 #[derive(Clone, Debug)]
@@ -81,7 +53,8 @@ pub struct BoshSled {
     pub bosh: Bosh,
     pub sled: Sled,
 
-    pub mounter_bones: Vec<MounterBone>,
+    pub bosh_mounter_bones: Vec<MounterBone>,
+    pub sled_mounter_bones: Vec<MounterBone>,
 }
 
 impl Default for Bosh {
@@ -102,11 +75,11 @@ impl Default for Bosh {
                 (PointIndex::BoshShoulder, shoulder),
                 (PointIndex::BoshButt, butt),
             ]),
-            bones: vec![],
+            standard_bones: vec![],
             repel_bones: vec![],
         };
 
-        bosh.bones = make_standard_bones(
+        bosh.standard_bones = make_standard_bones(
             vec![
                 (PointIndex::BoshShoulder, PointIndex::BoshButt),
                 (PointIndex::BoshShoulder, PointIndex::BoshLeftHand),
@@ -137,16 +110,25 @@ impl BoshSled {
         BoshSled {
             bosh,
             sled,
-            mounter_bones: BoshSled::default_mounter_bones(&points),
+            bosh_mounter_bones: BoshSled::default_bosh_mounter_bones(&points),
+            sled_mounter_bones: BoshSled::default_sled_mounter_bones(&points),
         }
     }
 
-    fn default_mounter_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<MounterBone> {
+    fn default_sled_mounter_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<MounterBone> {
         make_mounter_bones(
             vec![
                 (PointIndex::SledPeg, PointIndex::BoshButt, 0.057),
                 (PointIndex::SledTail, PointIndex::BoshButt, 0.057),
                 (PointIndex::SledNose, PointIndex::BoshButt, 0.057),
+            ],
+            points,
+        )
+    }
+
+    fn default_bosh_mounter_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<MounterBone> {
+        make_mounter_bones(
+            vec![
                 (PointIndex::BoshShoulder, PointIndex::SledPeg, 0.057),
                 (PointIndex::SledRope, PointIndex::BoshLeftHand, 0.057),
                 (PointIndex::SledRope, PointIndex::BoshRightHand, 0.057),
@@ -171,10 +153,10 @@ impl Default for Sled {
                 (PointIndex::SledTail, tail),
                 (PointIndex::SledRope, rope),
             ]),
-            bones: vec![],
+            standard_bones: vec![],
         };
 
-        sled.bones = make_standard_bones(
+        sled.standard_bones = make_standard_bones(
             vec![
                 (PointIndex::SledPeg, PointIndex::SledTail),
                 (PointIndex::SledTail, PointIndex::SledNose),
@@ -201,7 +183,8 @@ impl Default for BoshSled {
         BoshSled {
             bosh,
             sled,
-            mounter_bones: BoshSled::default_mounter_bones(&points),
+            bosh_mounter_bones: BoshSled::default_bosh_mounter_bones(&points),
+            sled_mounter_bones: BoshSled::default_sled_mounter_bones(&points),
         }
     }
 }
