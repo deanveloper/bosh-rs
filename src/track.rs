@@ -1,5 +1,5 @@
-use crate::grid::grid::Grid;
 use crate::line::{Line, LineType};
+use crate::linestore::grid::Grid;
 use crate::physics::line_physics::PhysicsPoint;
 use crate::vector::Vector2D;
 use std::collections::HashMap;
@@ -10,7 +10,6 @@ const EXTENSION_RATIO: f64 = 0.25;
 /// A track in linerider.
 pub struct Track {
     pub start: Vector2D,
-    pub lines: Box<Vec<Line>>,
 
     grid: Grid,
 
@@ -18,7 +17,7 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn new(start: Vector2D, lines: &mut Vec<Line>) -> Track {
+    pub fn new(start: Vector2D, lines: &Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
             if line.line_type == LineType::Scenery {
@@ -32,18 +31,29 @@ impl Track {
 
         Track {
             start,
-            lines: Box::new(lines.clone()),
-            grid: Default::default(),
+            grid: Grid::new(lines),
             hitbox_extensions,
         }
     }
 
-    /// Snaps a point to the nearest point, or returns `to_snap` if
+    pub fn add_line(&mut self, line: Line) {
+        self.grid.add_line(line);
+    }
+
+    pub fn remove_line(&mut self, line: Line) {
+        self.grid.remove_line(line);
+    }
+
+    pub fn lines_near(&self, point: Vector2D) -> Vec<Line> {
+        self.grid.lines_near(point)
+    }
+
+    /// Snaps a point to the nearest line ending, or returns `to_snap` if
     /// there are no nearby points.
     pub fn snap_point(&self, max_dist: f64, to_snap: Vector2D) -> Vector2D {
         let max_dist_sq = max_dist * max_dist;
 
-        self.lines
+        self.lines_near(to_snap)
             .iter()
             .flat_map(|l| [l.ends.0, l.ends.1])
             .map(|p| (p, p.distance_squared(to_snap)))
@@ -129,7 +139,6 @@ impl Clone for Track {
     fn clone(&self) -> Self {
         Track {
             start: self.start,
-            lines: self.lines.clone(),
             grid: self.grid.clone(),
             hitbox_extensions: self.hitbox_extensions.clone(),
         }

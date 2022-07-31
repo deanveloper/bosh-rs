@@ -1,4 +1,5 @@
 use crate::line::Line;
+use crate::linestore::raw_store::{RawStore, StoreIndex};
 use crate::vector::Vector2D;
 use std::collections::{HashMap, HashSet};
 
@@ -7,7 +8,11 @@ const CELL_SIZE: i64 = 20;
 /// Data structure used to query lines nearby the rider in
 /// an efficient manner.
 #[derive(Eq, PartialEq, Clone, Default, Debug)]
-pub struct Grid(HashMap<GridIndex, HashSet<Line>>);
+pub struct Grid {
+    lines: RawStore,
+
+    grid: HashMap<GridIndex, Vec<StoreIndex>>,
+}
 
 impl Grid {
     pub fn new(lines: &Vec<Line>) -> Grid {
@@ -19,29 +24,62 @@ impl Grid {
         grid
     }
 
-    pub fn lines_near(&self, loc: Vector2D) -> HashSet<Line> {
-        let mut nearby_lines: HashSet<Line> = HashSet::new();
+    pub fn lines_near(&self, loc: Vector2D) -> Vec<Line> {
+        let mut nearby_line_indices: HashSet<StoreIndex> = Default::default();
 
         let center = GridIndex::from_location(loc);
 
         for dx in [-1, 0, 1] {
             for dy in [-1, 0, 1] {
-                let mut index = center;
-                index.0 += dx;
-                index.1 += dy;
+                let mut grid_index = center;
+                grid_index.0 += dx;
+                grid_index.1 += dy;
 
-                if let Some(at_index) = self.0.get(&index).cloned() {
-                    nearby_lines.extend(at_index);
+                if let Some(store_indices) = self.grid.get(&grid_index).cloned() {
+                    for store_index in store_indices {
+                        nearby_line_indices.insert(store_index);
+                    }
                 }
             }
         }
 
-        nearby_lines
+        nearby_line_indices
+            .iter()
+            .map(|l| self.lines.line_at(*l).expect("no line at index"))
+            .collect()
     }
 
     pub fn add_line(&mut self, line: Line) {
+        let lines_idx = self.lines.add_line(line);
+
         for index in GridIndex::iter_over_line(line) {
-            self.0.entry(index).or_default().insert(line);
+            self.grid.entry(index).or_default().push(lines_idx);
+        }
+    }
+
+    pub fn remove_line(&mut self, line: Line) {
+        // remove lines_idx from grid
+        if let Some((replaced_idx, old_replacee_idx)) = self.lines.remove_line(line) {
+            for grid_idx in GridIndex::iter_over_line(line) {
+                if let Some(idxs) = self.grid.get_mut(&grid_idx) {
+                    if let Some(pos) = idxs.iter().position(|idx| *idx == replaced_idx) {
+                        idxs.swap_remove(pos);
+                    }
+                }
+            }
+
+            // replace instances of line
+            if let Some(line) = self.lines.line_at(replaced_idx) {
+                for grid_idx in GridIndex::iter_over_line(line) {
+                    if let Some(idxs) = self.grid.get_mut(&grid_idx) {
+                        idxs.iter_mut().for_each(|idx| {
+                            if *idx == old_replacee_idx {
+                                *idx = replaced_idx
+                            }
+                        })
+                    }
+                }
+            }
         }
     }
 }

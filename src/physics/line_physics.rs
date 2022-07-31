@@ -13,7 +13,7 @@ pub struct PhysicsPoint {
 pub fn update_position(point: PhysicsPoint, track: &Track) -> PhysicsPoint {
     let mut next_point = point;
 
-    for line in track.lines.iter() {
+    for line in &track.lines_near(point.location) {
         if matches!(line.line_type, LineType::Scenery) {
             continue;
         }
