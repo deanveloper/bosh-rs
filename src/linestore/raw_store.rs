@@ -34,11 +34,11 @@ impl RawStore {
 
     /// Returns the index of the removed line
     pub fn remove_line(&mut self, line: Line) -> Option<(StoreIndex, StoreIndex)> {
-        let mut idxs = self.indices_of_line.get_mut(&line)?;
+        let idxs = self.indices_of_line.get_mut(&line)?;
 
         // remove the line
         let idx = idxs.swap_remove(0);
-        if idxs.len() == 0 {
+        if idxs.is_empty() {
             self.indices_of_line.remove_entry(&line);
         }
 
