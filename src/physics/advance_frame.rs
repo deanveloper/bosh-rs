@@ -1,6 +1,6 @@
 use crate::frame::Frame;
 use crate::physics::rider_physics::{PhysicsEntity, UpdateBonesResult};
-use crate::rider::entities::Entity;
+use crate::rider::Entity;
 
 /// Runs the entire physics engine on a frame to get the next frame.
 pub fn frame_after<'t>(frame: &Frame<'t>) -> Frame<'t> {

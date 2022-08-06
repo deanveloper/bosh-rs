@@ -7,7 +7,7 @@ pub mod rider_physics;
 mod tests {
     use crate::line::{Line, LineType};
     use crate::physics::rider_physics::PhysicsEntity;
-    use crate::rider::entities::BoshSled;
+    use crate::rider::BoshSled;
     use crate::track::Track;
     use crate::vector::Vector2D;
 

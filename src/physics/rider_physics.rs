@@ -1,7 +1,7 @@
 use crate::physics::bone_physics::{joint_should_break, PhysicsBone};
 use crate::physics::line_physics;
 use crate::physics::line_physics::PhysicsPoint;
-use crate::rider::entities::{Bosh, BoshSled, Entity, PointIndex, Sled};
+use crate::rider::{Bosh, BoshSled, Entity, PointIndex, Sled};
 use crate::track::Track;
 use crate::vector::Vector2D;
 

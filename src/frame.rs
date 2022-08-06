@@ -1,4 +1,4 @@
-use crate::rider::entities::Entity;
+use crate::rider::Entity;
 use crate::track::Track;
 
 /// Frame represents a frozen instance of riders on a track.
