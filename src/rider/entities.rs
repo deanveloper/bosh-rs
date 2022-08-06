@@ -113,17 +113,21 @@ impl BoshSled {
             sled,
             bosh_mounter_bones: BoshSled::default_bosh_mounter_bones(&points),
             sled_mounter_bones: BoshSled::default_sled_mounter_bones(&points),
-            joints: vec![
-                Joint {
-                    pair1: (PointIndex::BoshShoulder, PointIndex::BoshButt),
-                    pair2: (PointIndex::SledRope, PointIndex::SledPeg),
-                },
-                Joint {
-                    pair1: (PointIndex::SledPeg, PointIndex::SledTail),
-                    pair2: (PointIndex::SledRope, PointIndex::SledPeg),
-                },
-            ],
+            joints: BoshSled::default_joints(),
         }
+    }
+
+    fn default_joints() -> Vec<Joint> {
+        vec![
+            Joint {
+                pair1: (PointIndex::BoshShoulder, PointIndex::BoshButt),
+                pair2: (PointIndex::SledRope, PointIndex::SledPeg),
+            },
+            Joint {
+                pair1: (PointIndex::SledPeg, PointIndex::SledTail),
+                pair2: (PointIndex::SledRope, PointIndex::SledPeg),
+            },
+        ]
     }
 
     fn default_sled_mounter_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<MounterBone> {
@@ -196,6 +200,7 @@ impl Default for BoshSled {
             sled,
             bosh_mounter_bones: BoshSled::default_bosh_mounter_bones(&points),
             sled_mounter_bones: BoshSled::default_sled_mounter_bones(&points),
+            joints: BoshSled::default_joints(),
         }
     }
 }

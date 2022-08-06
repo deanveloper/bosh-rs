@@ -1,4 +1,4 @@
-use crate::physics::bone_physics::{joint_should_break, PhysicsBone, PhysicsJoint};
+use crate::physics::bone_physics::{joint_should_break, PhysicsBone};
 use crate::physics::line_physics;
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::entities::{Bosh, BoshSled, Entity, PointIndex, Sled};
