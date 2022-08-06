@@ -36,6 +36,10 @@ impl Track {
         }
     }
 
+    pub fn all_lines(&self) -> &Vec<Line> {
+        self.grid.all_lines()
+    }
+
     pub fn add_line(&mut self, line: Line) {
         self.grid.add_line(line);
     }

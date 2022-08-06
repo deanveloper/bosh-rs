@@ -24,6 +24,10 @@ impl Grid {
         grid
     }
 
+    pub fn all_lines(&self) -> &Vec<Line> {
+        self.lines.all_lines()
+    }
+
     pub fn lines_near(&self, loc: Vector2D) -> Vec<Line> {
         let mut nearby_line_indices: HashSet<StoreIndex> = Default::default();
 
