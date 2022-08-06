@@ -232,7 +232,6 @@ fn make_physics_point(loc: Vector2D, friction: f64) -> PhysicsPoint {
     PhysicsPoint {
         previous_location: loc,
         location: loc,
-        velocity: Default::default(),
         friction,
     }
 }

@@ -54,7 +54,6 @@ where
             *p = PhysicsPoint {
                 previous_location: p.location,
                 location: p.location + new_velocity,
-                velocity: new_velocity,
                 friction: 0.0,
             };
         })
@@ -62,7 +61,17 @@ where
 
     /// Applies all physics steps to the rider in the correct order.
     /// Moves `self` because it may become unusable after the sled breaks.
-    fn apply_all_physics(self, track: &Track, gravity: Vector2D) -> UpdateBonesResult<Self> {
+    fn apply_all_physics(self, track: &Track) -> UpdateBonesResult<Self> {
+        self.apply_all_physics_custom_gravity(track, Vector2D(0.0, 0.175))
+    }
+
+    /// Applies all physics steps to the rider in the correct order.
+    /// Moves `self` because it may become unusable after the sled breaks.
+    fn apply_all_physics_custom_gravity(
+        self,
+        track: &Track,
+        gravity: Vector2D,
+    ) -> UpdateBonesResult<Self> {
         let mut result = self.apply_all_bones();
 
         match &mut result {
@@ -167,11 +176,9 @@ impl PhysicsEntity for BoshSled {
         Entity::BoshSled(self)
     }
 
-    fn mutate_points<F: FnMut(&mut PhysicsPoint)>(&mut self, mapper: F) {
-        let mut points = self.bosh.points.clone();
-        points.extend(&self.sled.points);
-
-        points.values_mut().for_each(mapper);
+    fn mutate_points<F: FnMut(&mut PhysicsPoint)>(&mut self, mut mapper: F) {
+        self.bosh.mutate_points(|p| mapper(p));
+        self.sled.mutate_points(|p| mapper(p));
     }
 
     fn point_at(&self, index: PointIndex) -> &PhysicsPoint {

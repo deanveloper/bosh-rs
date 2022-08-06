@@ -6,7 +6,6 @@ use crate::vector::Vector2D;
 pub struct PhysicsPoint {
     pub previous_location: Vector2D,
     pub location: Vector2D,
-    pub velocity: Vector2D,
     pub friction: f64,
 }
 

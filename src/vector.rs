@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
+use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// Represents a 2-dimensional vector of floats. Typically used to represent a point
@@ -170,4 +171,11 @@ impl PartialEq for Vector2D {
         self.0.to_bits() == other.0.to_bits() && self.1.to_bits() == other.1.to_bits()
     }
 }
+
+impl Sum for Vector2D {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.reduce(|v1, v2| v1 + v2).unwrap_or_default()
+    }
+}
+
 impl Eq for Vector2D {}
