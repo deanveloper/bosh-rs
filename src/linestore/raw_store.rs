@@ -4,12 +4,11 @@ use std::collections::HashMap;
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Default, Debug)]
 pub struct StoreIndex(usize);
 
-/// A data structure that holds an unordered list of lines, with duplicates,
-/// without
+/// A data structure that holds an unordered list of lines, with duplicates.
 #[derive(Eq, PartialEq, Clone, Default, Debug)]
 pub struct RawStore {
     lines: Vec<Line>,
-    indices_of_line: HashMap<Line, Vec<usize>>,
+    line_to_index: HashMap<Line, Vec<usize>>,
 }
 
 impl RawStore {
@@ -27,26 +26,37 @@ impl RawStore {
         self.lines.push(line);
         let idx = self.lines.len() - 1;
 
-        self.indices_of_line.entry(line).or_default().push(idx);
+        self.line_to_index.entry(line).or_default().push(idx);
 
         StoreIndex(idx)
     }
 
-    /// Returns the index of the removed line
-    pub fn remove_line(&mut self, line: Line) -> Option<(StoreIndex, StoreIndex)> {
-        let idxs = self.indices_of_line.get_mut(&line)?;
+    /// Removes a line from the store.
+    ///
+    /// If a swap_remove occurred such that the user of the
+    /// RawStore should need to update its indices, it returns those indices.
+    pub fn remove_line(&mut self, line: Line) -> RemoveLineResult {
+        let idxs = self.line_to_index.get_mut(&line);
+        if idxs.is_none() {
+            return RemoveLineResult::NoneRemoved;
+        }
+        let idxs = idxs.unwrap();
 
         // remove the line
         let idx = idxs.swap_remove(0);
         if idxs.is_empty() {
-            self.indices_of_line.remove_entry(&line);
+            self.line_to_index.remove_entry(&line);
         }
 
         self.lines.swap_remove(idx);
 
+        if self.lines.len() == idx {
+            return RemoveLineResult::RemovedNoSwap(StoreIndex(idx));
+        }
+
         // since we did a swap_remove, update the line that used to be at lines.len and set it to idx
         let line = self.lines.get(idx).unwrap();
-        self.indices_of_line
+        self.line_to_index
             .get_mut(line)
             .unwrap()
             .iter_mut()
@@ -56,6 +66,15 @@ impl RawStore {
                 }
             });
 
-        Some((StoreIndex(idx), StoreIndex(self.lines.len())))
+        RemoveLineResult::RemovedAndNeedsSwap {
+            from: StoreIndex(self.lines.len()),
+            to: StoreIndex(idx),
+        }
     }
+}
+
+pub enum RemoveLineResult {
+    NoneRemoved,
+    RemovedAndNeedsSwap { from: StoreIndex, to: StoreIndex },
+    RemovedNoSwap(StoreIndex),
 }

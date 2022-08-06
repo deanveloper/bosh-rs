@@ -1,5 +1,5 @@
 use crate::line::Line;
-use crate::linestore::raw_store::{RawStore, StoreIndex};
+use crate::linestore::raw_store::{RawStore, RemoveLineResult, StoreIndex};
 use crate::vector::Vector2D;
 use std::collections::{HashMap, HashSet};
 
@@ -59,25 +59,40 @@ impl Grid {
 
     pub fn remove_line(&mut self, line: Line) {
         // remove lines_idx from grid
-        if let Some((replaced_idx, old_replacee_idx)) = self.lines.remove_line(line) {
-            for grid_idx in GridIndex::iter_over_line(line) {
-                if let Some(idxs) = self.grid.get_mut(&grid_idx) {
-                    if let Some(pos) = idxs.iter().position(|idx| *idx == replaced_idx) {
-                        idxs.swap_remove(pos);
+        let result = self.lines.remove_line(line);
+
+        match result {
+            RemoveLineResult::NoneRemoved => {}
+            RemoveLineResult::RemovedNoSwap(idx) => {
+                self.remove_line_for_real(line, idx);
+            }
+            RemoveLineResult::RemovedAndNeedsSwap {
+                from: from_idx,
+                to: to_idx,
+            } => {
+                self.remove_line_for_real(line, to_idx);
+
+                // replace instances of line
+                if let Some(line) = self.lines.line_at(to_idx) {
+                    for grid_idx in GridIndex::iter_over_line(line) {
+                        if let Some(idxs) = self.grid.get_mut(&grid_idx) {
+                            idxs.iter_mut().for_each(|idx| {
+                                if *idx == from_idx {
+                                    *idx = to_idx
+                                }
+                            })
+                        }
                     }
                 }
             }
+        }
+    }
 
-            // replace instances of line
-            if let Some(line) = self.lines.line_at(replaced_idx) {
-                for grid_idx in GridIndex::iter_over_line(line) {
-                    if let Some(idxs) = self.grid.get_mut(&grid_idx) {
-                        idxs.iter_mut().for_each(|idx| {
-                            if *idx == old_replacee_idx {
-                                *idx = replaced_idx
-                            }
-                        })
-                    }
+    fn remove_line_for_real(&mut self, line: Line, replaced_idx: StoreIndex) {
+        for grid_idx in GridIndex::iter_over_line(line) {
+            if let Some(idxs) = self.grid.get_mut(&grid_idx) {
+                if let Some(idx_pos) = idxs.iter().position(|idx| *idx == replaced_idx) {
+                    idxs.swap_remove(idx_pos);
                 }
             }
         }
