@@ -203,7 +203,7 @@ mod tests {
         let line4 = make_line(Vector2D(2.0, 0.0), Vector2D(100.0, 0.0));
         let far_line = make_line(Vector2D(0.0, 1000.0), Vector2D(100.0, 1000.0));
 
-        let grid = Grid::new(&vec![line1, line2, line3, far_line]);
+        let grid = Grid::new(&vec![line1, line2, line3, line4, far_line]);
 
         let lines = grid.all_lines();
         assert_eq!(lines, &vec![line1, line2, line3, line4, far_line]);
