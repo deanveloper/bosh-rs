@@ -5,7 +5,7 @@ pub trait Bone {
 }
 
 /// A standard bone is one which simply holds two points together.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct StandardBone {
     pub p1: PointIndex,
     pub p2: PointIndex,
@@ -14,7 +14,7 @@ pub struct StandardBone {
 }
 
 /// A Mounter is a bone which holds bosh onto his sled.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MounterBone {
     pub p1: PointIndex,
     pub p2: PointIndex,
@@ -24,7 +24,7 @@ pub struct MounterBone {
 }
 
 /// Repel is a bone which makes sure two points don't get too close to each other.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RepelBone {
     pub p1: PointIndex,
     pub p2: PointIndex,
@@ -49,6 +49,10 @@ impl Bone for RepelBone {
     }
 }
 
-/// A joint is a bone which tries to hold a 90 degree angle between its two bones.
-/// Or I think that's what a joint is. I'm still not quite sure, I'll find out later.
-pub struct Joint<T: Bone>(pub T, pub T);
+/// A joint breaks if its cross product is negative. Joints don't actually affect the position
+/// of entities, they only exist to break if needed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Joint {
+    pub pair1: (PointIndex, PointIndex),
+    pub pair2: (PointIndex, PointIndex),
+}

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 use crate::physics::line_physics::PhysicsPoint;
-use crate::rider::bone::{MounterBone, RepelBone, StandardBone};
+use crate::rider::bone::{Joint, MounterBone, RepelBone, StandardBone};
 use crate::vector::Vector2D;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -55,6 +55,7 @@ pub struct BoshSled {
 
     pub bosh_mounter_bones: Vec<MounterBone>,
     pub sled_mounter_bones: Vec<MounterBone>,
+    pub joints: Vec<Joint>,
 }
 
 impl Default for Bosh {
@@ -112,6 +113,16 @@ impl BoshSled {
             sled,
             bosh_mounter_bones: BoshSled::default_bosh_mounter_bones(&points),
             sled_mounter_bones: BoshSled::default_sled_mounter_bones(&points),
+            joints: vec![
+                Joint {
+                    pair1: (PointIndex::BoshShoulder, PointIndex::BoshButt),
+                    pair2: (PointIndex::SledRope, PointIndex::SledPeg),
+                },
+                Joint {
+                    pair1: (PointIndex::SledPeg, PointIndex::SledTail),
+                    pair2: (PointIndex::SledRope, PointIndex::SledPeg),
+                },
+            ],
         }
     }
 

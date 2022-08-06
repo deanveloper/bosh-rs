@@ -1,4 +1,4 @@
-use crate::physics::bone_physics::PhysicsBone;
+use crate::physics::bone_physics::{joint_should_break, PhysicsBone, PhysicsJoint};
 use crate::physics::line_physics;
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::entities::{Bosh, BoshSled, Entity, PointIndex, Sled};
@@ -208,12 +208,7 @@ impl PhysicsEntity for BoshSled {
         if broken {
             UpdateBonesResult::Broken(entity.bosh, entity.sled)
         } else {
-            UpdateBonesResult::Same(BoshSled {
-                bosh: entity.bosh,
-                sled: entity.sled,
-                sled_mounter_bones: entity.sled_mounter_bones,
-                bosh_mounter_bones: entity.bosh_mounter_bones,
-            })
+            UpdateBonesResult::Same(entity)
         }
     }
 
@@ -248,6 +243,10 @@ impl PhysicsEntity for BoshSled {
 
         let repel_bones = &this.bosh.repel_bones.clone();
         this = this.apply_bones(repel_bones).unwrap_same();
+
+        if this.joints.iter().any(|j| joint_should_break(j, &this)) {
+            broken = true;
+        }
 
         if broken {
             UpdateBonesResult::Broken(this.bosh, this.sled)

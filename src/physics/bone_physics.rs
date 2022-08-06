@@ -1,5 +1,5 @@
 use crate::physics::rider_physics::PhysicsEntity;
-use crate::rider::bone::{Bone, MounterBone, RepelBone, StandardBone};
+use crate::rider::bone::{Bone, Joint, MounterBone, RepelBone, StandardBone};
 use crate::vector::Vector2D;
 
 pub trait PhysicsBone: Bone {
@@ -58,6 +58,14 @@ impl PhysicsBone for MounterBone {
             Some(stick_resolve(p1, p2, diff))
         }
     }
+}
+pub fn joint_should_break<E: PhysicsEntity>(joint: &Joint, entity: &E) -> bool {
+    let p1 = entity.point_at(joint.pair1.0);
+    let p2 = entity.point_at(joint.pair1.1);
+    let q1 = entity.point_at(joint.pair2.0);
+    let q2 = entity.point_at(joint.pair2.1);
+
+    (p2.location - p1.location).cross_product_length(q2.location - q1.location) < 0.0
 }
 
 fn stick_resolve(p1: Vector2D, p2: Vector2D, diff: f64) -> (Vector2D, Vector2D) {

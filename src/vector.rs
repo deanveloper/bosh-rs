@@ -34,7 +34,7 @@ impl Vector2D {
 
     /// Cross products don't exist in 2d space, however this method
     /// returns the length of what the cross product would be in
-    /// 3d space. Not sure if this is even useful.
+    /// 3d space.
     pub fn cross_product_length(self, rhs: Vector2D) -> f64 {
         self.0 * rhs.1 - self.1 * rhs.0
     }
