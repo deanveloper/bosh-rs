@@ -1,11 +1,15 @@
-pub mod frame;
-pub mod line;
+mod frame;
+mod line;
+mod linestore;
 pub mod physics;
 pub mod rider;
-pub mod track;
-pub mod vector;
+mod track;
+mod vector;
 
-mod linestore;
+pub use frame::*;
+pub use line::*;
+pub use track::*;
+pub use vector::*;
 
 #[cfg(test)]
 mod tests {
