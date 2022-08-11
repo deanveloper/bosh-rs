@@ -3,9 +3,9 @@ mod raw_store;
 
 #[cfg(test)]
 mod tests {
-    use crate::line::{Line, LineType};
+    use crate::game::{Line, LineType};
     use crate::linestore::grid::Grid;
-    use crate::vector::Vector2D;
+    use crate::game::Vector2D;
     use std::collections::HashSet;
 
     fn make_line(v1: Vector2D, v2: Vector2D) -> Line {

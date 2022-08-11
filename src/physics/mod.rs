@@ -5,11 +5,11 @@ pub mod rider_physics;
 
 #[cfg(test)]
 mod tests {
-    use crate::line::{Line, LineType};
+    use crate::game::Track;
+    use crate::game::Vector2D;
+    use crate::game::{Line, LineType};
     use crate::physics::rider_physics::PhysicsEntity;
-    use crate::rider::BoshSled;
-    use crate::track::Track;
-    use crate::vector::Vector2D;
+    use crate::rider::{BoshSled, Entity};
 
     fn avg_position(bosh_sled: &BoshSled) -> Vector2D {
         let bosh_sum: Vector2D = bosh_sled.bosh.points.values().map(|p| p.location).sum();
@@ -43,9 +43,9 @@ mod tests {
     #[ignore]
     fn rider_physics_bosh_falling() {
         let mut falling_bosh_sled = BoshSled::default();
-        let empty_track = Track::new(Vector2D(0.0, 0.0), &vec![]);
+        let empty_track = Track::new(&vec![Entity::BoshSled(Default::default())], &vec![]);
         let _track = Track::new(
-            Vector2D(0.0, 0.0),
+            &vec![Entity::BoshSled(Default::default())],
             &vec![Line {
                 flipped: false,
                 line_type: LineType::Normal,

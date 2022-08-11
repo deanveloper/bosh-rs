@@ -3,7 +3,7 @@ use std::hash::Hash;
 
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::bone::{Joint, MounterBone, RepelBone, StandardBone};
-use crate::vector::Vector2D;
+use crate::game::Vector2D;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Entity {

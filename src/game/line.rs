@@ -1,4 +1,4 @@
-use crate::vector::Vector2D;
+use crate::game::vector::Vector2D;
 use std::hash::Hash;
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]

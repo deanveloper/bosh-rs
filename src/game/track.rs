@@ -1,7 +1,11 @@
-use crate::line::{Line, LineType};
+use crate::game::line::{Line, LineType};
+use crate::game::vector::Vector2D;
 use crate::linestore::grid::Grid;
+use crate::physics;
 use crate::physics::line_physics::PhysicsPoint;
-use crate::vector::Vector2D;
+use crate::rider::Entity;
+use physics::advance_frame::frame_after;
+use std::cell::RefCell;
 use std::collections::HashMap;
 
 const GRAVITY_WELL_HEIGHT: f64 = 10.0;
@@ -9,15 +13,15 @@ const EXTENSION_RATIO: f64 = 0.25;
 
 /// A track in linerider.
 pub struct Track {
-    pub start: Vector2D,
-
     grid: Grid,
 
     hitbox_extensions: HashMap<Line, (f64, f64)>,
+
+    precomputed_rider_positions: RefCell<Vec<Vec<Entity>>>,
 }
 
 impl Track {
-    pub fn new(start: Vector2D, lines: &Vec<Line>) -> Track {
+    pub fn new(starting_positions: &[Entity], lines: &Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
             if line.line_type == LineType::Scenery {
@@ -30,9 +34,9 @@ impl Track {
         }
 
         Track {
-            start,
             grid: Grid::new(lines),
             hitbox_extensions,
+            precomputed_rider_positions: RefCell::new(vec![starting_positions.to_vec()]),
         }
     }
 
@@ -42,14 +46,32 @@ impl Track {
 
     pub fn add_line(&mut self, line: Line) {
         self.grid.add_line(line);
+        self.precomputed_rider_positions.borrow_mut().drain(1..);
     }
 
     pub fn remove_line(&mut self, line: Line) {
         self.grid.remove_line(line);
+        self.precomputed_rider_positions.borrow_mut().drain(1..);
     }
 
     pub fn lines_near(&self, point: Vector2D) -> Vec<Line> {
         self.grid.lines_near(point)
+    }
+
+    /// Gets the rider positions for a zero-indexed frame.
+    pub fn rider_positions_at(&self, frame: usize) -> Vec<Entity> {
+        let mut position_cache = self.precomputed_rider_positions.borrow_mut();
+        if let Some(riders) = position_cache.get(frame) {
+            riders.clone()
+        } else {
+            let len = position_cache.len();
+            for _ in len..=frame {
+                let next_positions = frame_after(position_cache.last().unwrap(), self);
+                position_cache.push(next_positions);
+            }
+
+            position_cache.last().unwrap().clone()
+        }
     }
 
     /// Snaps a point to the nearest line ending, or returns `to_snap` if
@@ -142,9 +164,9 @@ impl Track {
 impl Clone for Track {
     fn clone(&self) -> Self {
         Track {
-            start: self.start,
             grid: self.grid.clone(),
             hitbox_extensions: self.hitbox_extensions.clone(),
+            precomputed_rider_positions: self.precomputed_rider_positions.clone(),
         }
     }
 }

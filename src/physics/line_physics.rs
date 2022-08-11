@@ -1,6 +1,6 @@
-use crate::line::LineType;
-use crate::track::Track;
-use crate::vector::Vector2D;
+use crate::game::LineType;
+use crate::game::Track;
+use crate::game::Vector2D;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct PhysicsPoint {

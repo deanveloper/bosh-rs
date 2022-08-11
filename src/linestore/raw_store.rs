@@ -1,4 +1,4 @@
-use crate::line::Line;
+use crate::game::Line;
 use std::collections::HashMap;
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy, Default, Debug)]

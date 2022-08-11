@@ -1,6 +1,6 @@
-use crate::line::Line;
+use crate::game::Line;
+use crate::game::Vector2D;
 use crate::linestore::raw_store::{RawStore, RemoveLineResult, StoreIndex};
-use crate::vector::Vector2D;
 use std::collections::{HashMap, HashSet};
 
 const CELL_SIZE: i64 = 20;

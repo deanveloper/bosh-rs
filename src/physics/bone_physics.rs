@@ -1,6 +1,6 @@
+use crate::game::Vector2D;
 use crate::physics::rider_physics::PhysicsEntity;
 use crate::rider::{Bone, Joint, MounterBone, RepelBone, StandardBone};
-use crate::vector::Vector2D;
 
 pub trait PhysicsBone: Bone {
     /// Returns Some((p1, p2)) for the bone-bounded locations, or None if the bone should break.
