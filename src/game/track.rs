@@ -40,20 +40,24 @@ impl Track {
         }
     }
 
+    /// Gets all lines in the track.
     pub fn all_lines(&self) -> &Vec<Line> {
         self.grid.all_lines()
     }
 
+    /// Adds a line to the track.
     pub fn add_line(&mut self, line: Line) {
         self.grid.add_line(line);
         self.precomputed_rider_positions.borrow_mut().drain(1..);
     }
 
+    /// Removes a single line from the track.
     pub fn remove_line(&mut self, line: Line) {
         self.grid.remove_line(line);
         self.precomputed_rider_positions.borrow_mut().drain(1..);
     }
 
+    /// Gets all of the lines near a point.
     pub fn lines_near(&self, point: Vector2D) -> Vec<Line> {
         self.grid.lines_near(point)
     }
@@ -72,6 +76,15 @@ impl Track {
 
             position_cache.last().unwrap().clone()
         }
+    }
+
+    /// Adds a new rider to the track.
+    pub fn create_rider(&mut self, entity: Entity) {
+        let position_cache = self.precomputed_rider_positions.get_mut();
+        let initial_frame = position_cache.get_mut(0).unwrap();
+        initial_frame.push(entity);
+
+        position_cache.drain(1..);
     }
 
     /// Snaps a point to the nearest line ending, or returns `to_snap` if
