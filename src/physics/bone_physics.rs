@@ -13,8 +13,7 @@ impl PhysicsBone for StandardBone {
         let p1 = entity.point_at(self.p1);
         let p2 = entity.point_at(self.p2);
 
-        let diff = p2.location - p1.location;
-        let length = diff.length_squared().sqrt();
+        let length = p2.location.distance_squared(p1.location).sqrt();
 
         Some(bone_resolve(
             p1.location,
@@ -29,8 +28,7 @@ impl PhysicsBone for RepelBone {
         let p1 = entity.point_at(self.p1);
         let p2 = entity.point_at(self.p2);
 
-        let diff = p2.location - p1.location;
-        let length = diff.length_squared().sqrt();
+        let length = p2.location.distance_squared(p1.location).sqrt();
 
         if length >= self.resting_length * self.length_factor {
             Some((p1.location, p2.location))

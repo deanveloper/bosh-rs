@@ -53,42 +53,58 @@ where
             *p = PhysicsPoint {
                 previous_location: p.location,
                 location: p.location + new_velocity,
-                friction: 0.0,
+                friction: p.friction,
             };
         })
     }
 
+    /// applies joint logic
+    /// does nothing on non-boshsleds
+    fn apply_all_joints(self) -> UpdateBonesResult<Self>;
+
     /// Applies all physics steps to the rider in the correct order.
     /// Moves `self` because it may become unusable after the sled breaks.
-    fn apply_all_physics(self, track: &Track) -> UpdateBonesResult<Self> {
-        self.apply_all_physics_custom_gravity(track, Vector2D(0.0, 0.175))
+    fn apply_all_physics_ez(self, track: &Track) -> UpdateBonesResult<Self> {
+        self.apply_all_physics(track, Vector2D(0.0, 0.175), 6)
     }
 
     /// Applies all physics steps to the rider in the correct order.
     /// Moves `self` because it may become unusable after the sled breaks.
-    fn apply_all_physics_custom_gravity(
-        self,
+    fn apply_all_physics(
+        mut self,
         track: &Track,
         gravity: Vector2D,
+        iterations: u64,
     ) -> UpdateBonesResult<Self> {
-        let mut result = self.apply_all_bones();
+        self.next_points(gravity);
 
-        match &mut result {
-            UpdateBonesResult::Same(t) => {
-                t.next_points(gravity);
+        let mut result = UpdateBonesResult::Same(self);
 
-                t.apply_gravity_wells(track);
-            }
-            UpdateBonesResult::Broken(bosh, sled) => {
-                bosh.next_points(gravity);
-                sled.next_points(gravity);
+        for _ in 0..iterations {
+            result = match result {
+                UpdateBonesResult::Same(same) => same.apply_all_bones(),
+                UpdateBonesResult::Broken(bosh, sled) => {
+                    let bosh = bosh.apply_all_bones().unwrap_same();
+                    let sled = sled.apply_all_bones().unwrap_same();
 
-                bosh.apply_gravity_wells(track);
-                sled.apply_gravity_wells(track);
+                    UpdateBonesResult::Broken(bosh, sled)
+                }
+            };
+            match &mut result {
+                UpdateBonesResult::Same(same) => {
+                    same.apply_gravity_wells(track);
+                }
+                UpdateBonesResult::Broken(bosh, sled) => {
+                    bosh.apply_gravity_wells(track);
+                    sled.apply_gravity_wells(track);
+                }
             }
         }
 
-        result
+        match result {
+            UpdateBonesResult::Same(same) => same.apply_all_joints(),
+            UpdateBonesResult::Broken(_, _) => result,
+        }
     }
 }
 
@@ -139,6 +155,10 @@ impl PhysicsEntity for Bosh {
 
         UpdateBonesResult::Same(this)
     }
+
+    fn apply_all_joints(self) -> UpdateBonesResult<Self> {
+        UpdateBonesResult::Same(self)
+    }
 }
 impl PhysicsEntity for Sled {
     fn to_entity(self) -> Entity {
@@ -168,6 +188,10 @@ impl PhysicsEntity for Sled {
         this = this.apply_bones(standard_bones).unwrap_same();
 
         UpdateBonesResult::Same(this)
+    }
+
+    fn apply_all_joints(self) -> UpdateBonesResult<Self> {
+        UpdateBonesResult::Same(self)
     }
 }
 impl PhysicsEntity for BoshSled {
@@ -250,14 +274,18 @@ impl PhysicsEntity for BoshSled {
         let repel_bones = &this.bosh.repel_bones.clone();
         this = this.apply_bones(repel_bones).unwrap_same();
 
-        if this.joints.iter().any(|j| joint_should_break(j, &this)) {
-            broken = true;
-        }
-
         if broken {
             UpdateBonesResult::Broken(this.bosh, this.sled)
         } else {
             UpdateBonesResult::Same(this)
+        }
+    }
+
+    fn apply_all_joints(self) -> UpdateBonesResult<Self> {
+        if self.joints.iter().any(|j| joint_should_break(j, &self)) {
+            UpdateBonesResult::Broken(self.bosh, self.sled)
+        } else {
+            UpdateBonesResult::Same(self)
         }
     }
 }
