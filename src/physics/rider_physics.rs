@@ -1,9 +1,9 @@
+use crate::game::Track;
+use crate::game::Vector2D;
 use crate::physics::bone_physics::{joint_should_break, PhysicsBone};
 use crate::physics::line_physics;
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::{Bosh, BoshSled, Entity, PointIndex, Sled};
-use crate::game::Track;
-use crate::game::Vector2D;
 
 pub trait PhysicsEntity
 where
@@ -26,7 +26,7 @@ where
         self.mutate_points(|p| *p = line_physics::update_position(*p, track))
     }
 
-    /// Applies bone and joint physics to a list of bones. Moves self because
+    /// Applies bone physics to a list of bones. Moves self because
     /// a BoshSled may break, causing `self` to become unusable.
     fn apply_bones<B: PhysicsBone>(self, bones: &Vec<B>) -> UpdateBonesResult<Self> {
         let mut entity = self;

@@ -40,7 +40,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn rider_physics_bosh_falling() {
         let mut falling_bosh_sled = BoshSled::default();
         let empty_track = Track::new(&vec![Entity::BoshSled(Default::default())], &vec![]);

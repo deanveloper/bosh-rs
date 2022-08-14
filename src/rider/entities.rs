@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
+use crate::game::Vector2D;
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::bone::{Joint, MounterBone, RepelBone, StandardBone};
-use crate::game::Vector2D;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Entity {
@@ -58,51 +58,6 @@ pub struct BoshSled {
     pub joints: Vec<Joint>,
 }
 
-impl Default for Bosh {
-    fn default() -> Bosh {
-        let left_foot = make_physics_point(Vector2D(10.0, 5.0), 0.0);
-        let right_foot = make_physics_point(Vector2D(10.0, 5.0), 0.0);
-        let left_hand = make_physics_point(Vector2D(11.5, -5.0), 0.1);
-        let right_hand = make_physics_point(Vector2D(11.5, -5.0), 0.1);
-        let shoulder = make_physics_point(Vector2D(5.0, -5.5), 0.8);
-        let butt = make_physics_point(Vector2D(5.0, 0.0), 0.8);
-
-        let mut bosh = Bosh {
-            points: HashMap::from([
-                (PointIndex::BoshLeftFoot, left_foot),
-                (PointIndex::BoshRightFoot, right_foot),
-                (PointIndex::BoshLeftHand, left_hand),
-                (PointIndex::BoshRightHand, right_hand),
-                (PointIndex::BoshShoulder, shoulder),
-                (PointIndex::BoshButt, butt),
-            ]),
-            standard_bones: vec![],
-            repel_bones: vec![],
-        };
-
-        bosh.standard_bones = make_standard_bones(
-            vec![
-                (PointIndex::BoshShoulder, PointIndex::BoshButt),
-                (PointIndex::BoshShoulder, PointIndex::BoshLeftHand),
-                (PointIndex::BoshShoulder, PointIndex::BoshRightHand),
-                (PointIndex::BoshButt, PointIndex::BoshLeftFoot),
-                (PointIndex::BoshButt, PointIndex::BoshRightFoot),
-                (PointIndex::BoshShoulder, PointIndex::BoshRightHand),
-            ],
-            &bosh.points,
-        );
-        bosh.repel_bones = make_repel_bones(
-            vec![
-                (PointIndex::BoshShoulder, PointIndex::BoshLeftFoot, 0.5),
-                (PointIndex::BoshShoulder, PointIndex::BoshRightFoot, 0.5),
-            ],
-            &bosh.points,
-        );
-
-        bosh
-    }
-}
-
 impl BoshSled {
     pub fn new(bosh: Bosh, sled: Sled) -> BoshSled {
         let mut points = bosh.points.clone();
@@ -117,7 +72,7 @@ impl BoshSled {
         }
     }
 
-    fn default_joints() -> Vec<Joint> {
+    pub fn default_joints() -> Vec<Joint> {
         vec![
             Joint {
                 pair1: (PointIndex::BoshShoulder, PointIndex::BoshButt),
@@ -130,7 +85,10 @@ impl BoshSled {
         ]
     }
 
-    fn default_sled_mounter_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<MounterBone> {
+    // TODO - precompute resting lengths of bones
+    pub fn default_sled_mounter_bones(
+        points: &HashMap<PointIndex, PhysicsPoint>,
+    ) -> Vec<MounterBone> {
         make_mounter_bones(
             vec![
                 (PointIndex::SledPeg, PointIndex::BoshButt, 0.057),
@@ -141,7 +99,10 @@ impl BoshSled {
         )
     }
 
-    fn default_bosh_mounter_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<MounterBone> {
+    // TODO - precompute resting lengths of bones
+    pub fn default_bosh_mounter_bones(
+        points: &HashMap<PointIndex, PhysicsPoint>,
+    ) -> Vec<MounterBone> {
         make_mounter_bones(
             vec![
                 (PointIndex::BoshShoulder, PointIndex::SledPeg, 0.057),
@@ -155,35 +116,24 @@ impl BoshSled {
     }
 }
 
+impl Default for Bosh {
+    fn default() -> Bosh {
+        let points = Bosh::default_points();
+        Bosh {
+            points: points.clone(),
+            standard_bones: Bosh::default_standard_bones(&points),
+            repel_bones: Bosh::default_repel_bones(&points),
+        }
+    }
+}
+
 impl Default for Sled {
     fn default() -> Sled {
-        let peg = make_physics_point(Vector2D(0.0, 0.0), 0.8);
-        let nose = make_physics_point(Vector2D(15.0, 5.0), 0.0);
-        let tail = make_physics_point(Vector2D(0.0, 5.0), 0.0);
-        let rope = make_physics_point(Vector2D(17.5, 0.0), 0.0);
-        let mut sled = Sled {
-            points: HashMap::from([
-                (PointIndex::SledPeg, peg),
-                (PointIndex::SledNose, nose),
-                (PointIndex::SledTail, tail),
-                (PointIndex::SledRope, rope),
-            ]),
-            standard_bones: vec![],
-        };
-
-        sled.standard_bones = make_standard_bones(
-            vec![
-                (PointIndex::SledPeg, PointIndex::SledTail),
-                (PointIndex::SledTail, PointIndex::SledNose),
-                (PointIndex::SledNose, PointIndex::SledRope),
-                (PointIndex::SledRope, PointIndex::SledPeg),
-                (PointIndex::SledPeg, PointIndex::SledNose),
-                (PointIndex::SledRope, PointIndex::SledTail),
-            ],
-            &sled.points,
-        );
-
-        sled
+        let points = Sled::default_points();
+        Sled {
+            points: points.clone(),
+            standard_bones: Sled::default_standard_bones(&points),
+        }
     }
 }
 
@@ -202,6 +152,83 @@ impl Default for BoshSled {
             sled_mounter_bones: BoshSled::default_sled_mounter_bones(&points),
             joints: BoshSled::default_joints(),
         }
+    }
+}
+
+impl Bosh {
+    pub fn default_points() -> HashMap<PointIndex, PhysicsPoint> {
+        let left_foot = make_physics_point(Vector2D(10.0, 5.0), 0.0);
+        let right_foot = make_physics_point(Vector2D(10.0, 5.0), 0.0);
+        let left_hand = make_physics_point(Vector2D(11.5, -5.0), 0.1);
+        let right_hand = make_physics_point(Vector2D(11.5, -5.0), 0.1);
+        let shoulder = make_physics_point(Vector2D(5.0, -5.5), 0.8);
+        let butt = make_physics_point(Vector2D(5.0, 0.0), 0.8);
+
+        HashMap::from([
+            (PointIndex::BoshLeftFoot, left_foot),
+            (PointIndex::BoshRightFoot, right_foot),
+            (PointIndex::BoshLeftHand, left_hand),
+            (PointIndex::BoshRightHand, right_hand),
+            (PointIndex::BoshShoulder, shoulder),
+            (PointIndex::BoshButt, butt),
+        ])
+    }
+
+    // TODO - precompute resting lengths of bones
+    pub fn default_standard_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<StandardBone> {
+        make_standard_bones(
+            vec![
+                (PointIndex::BoshShoulder, PointIndex::BoshButt),
+                (PointIndex::BoshShoulder, PointIndex::BoshLeftHand),
+                (PointIndex::BoshShoulder, PointIndex::BoshRightHand),
+                (PointIndex::BoshButt, PointIndex::BoshLeftFoot),
+                (PointIndex::BoshButt, PointIndex::BoshRightFoot),
+                (PointIndex::BoshShoulder, PointIndex::BoshRightHand),
+            ],
+            points,
+        )
+    }
+
+    // TODO - precompute resting lengths of bones
+    pub fn default_repel_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<RepelBone> {
+        make_repel_bones(
+            vec![
+                (PointIndex::BoshShoulder, PointIndex::BoshLeftFoot, 0.5),
+                (PointIndex::BoshShoulder, PointIndex::BoshRightFoot, 0.5),
+            ],
+            points,
+        )
+    }
+}
+
+impl Sled {
+    pub fn default_points() -> HashMap<PointIndex, PhysicsPoint> {
+        let peg = make_physics_point(Vector2D(0.0, 0.0), 0.8);
+        let nose = make_physics_point(Vector2D(15.0, 5.0), 0.0);
+        let tail = make_physics_point(Vector2D(0.0, 5.0), 0.0);
+        let rope = make_physics_point(Vector2D(17.5, 0.0), 0.0);
+
+        HashMap::from([
+            (PointIndex::SledPeg, peg),
+            (PointIndex::SledNose, nose),
+            (PointIndex::SledTail, tail),
+            (PointIndex::SledRope, rope),
+        ])
+    }
+
+    // TODO - precompute resting lengths of bones
+    pub fn default_standard_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<StandardBone> {
+        make_standard_bones(
+            vec![
+                (PointIndex::SledPeg, PointIndex::SledTail),
+                (PointIndex::SledTail, PointIndex::SledNose),
+                (PointIndex::SledNose, PointIndex::SledRope),
+                (PointIndex::SledRope, PointIndex::SledPeg),
+                (PointIndex::SledPeg, PointIndex::SledNose),
+                (PointIndex::SledRope, PointIndex::SledTail),
+            ],
+            points,
+        )
     }
 }
 

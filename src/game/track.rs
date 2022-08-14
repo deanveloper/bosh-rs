@@ -12,6 +12,7 @@ const GRAVITY_WELL_HEIGHT: f64 = 10.0;
 const EXTENSION_RATIO: f64 = 0.25;
 
 /// A track in linerider.
+#[derive(Debug)]
 pub struct Track {
     grid: Grid,
 

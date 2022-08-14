@@ -1,16 +1,18 @@
 use crate::game::vector::Vector2D;
+use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 
-#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum LineType {
     Normal,
     Accelerate { amount: u64 },
     Scenery,
 }
 
-#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Line {
     pub flipped: bool,
+    #[serde(alias = "lineType")]
     pub line_type: LineType,
     pub ends: (Vector2D, Vector2D),
 }

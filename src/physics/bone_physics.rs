@@ -16,10 +16,10 @@ impl PhysicsBone for StandardBone {
         let diff = p2.location - p1.location;
         let length = diff.length_squared().sqrt();
 
-        Some(stick_resolve(
+        Some(bone_resolve(
             p1.location,
             p2.location,
-            get_diff(self.resting_length, length),
+            get_diff(self.resting_length, length) * 0.5,
         ))
     }
 }
@@ -35,7 +35,7 @@ impl PhysicsBone for RepelBone {
         if length >= self.resting_length * self.length_factor {
             Some((p1.location, p2.location))
         } else {
-            Some(stick_resolve(
+            Some(bone_resolve(
                 p1.location,
                 p2.location,
                 get_diff(self.resting_length * self.length_factor * 0.5, length),
@@ -55,7 +55,7 @@ impl PhysicsBone for MounterBone {
         if diff > self.endurance {
             None
         } else {
-            Some(stick_resolve(p1, p2, diff))
+            Some(bone_resolve(p1, p2, diff))
         }
     }
 }
@@ -68,7 +68,7 @@ pub fn joint_should_break<E: PhysicsEntity>(joint: &Joint, entity: &E) -> bool {
     (p2.location - p1.location).cross_product_length(q2.location - q1.location) < 0.0
 }
 
-fn stick_resolve(p1: Vector2D, p2: Vector2D, diff: f64) -> (Vector2D, Vector2D) {
+fn bone_resolve(p1: Vector2D, p2: Vector2D, diff: f64) -> (Vector2D, Vector2D) {
     let delta = (p1 - p2) * diff;
 
     (p1 - delta, delta + p2)
@@ -78,6 +78,6 @@ fn get_diff(resting_length: f64, current_length: f64) -> f64 {
     if current_length == 0.0 {
         0.0
     } else {
-        (current_length - resting_length) / current_length
+        (current_length - resting_length) / current_length * 0.5
     }
 }
