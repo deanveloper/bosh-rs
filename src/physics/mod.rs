@@ -174,7 +174,7 @@ mod tests {
 
         bosh_sled.mutate_points(|p| p.previous_location -= Vector2D(0.4, 0.0));
 
-        for _ in 0..1000 {
+        for _ in 0..100 {
             bosh_sled = bosh_sled.apply_all_physics_ez(&track).unwrap_same();
         }
     }
@@ -193,7 +193,7 @@ mod tests {
 
         bosh_sled.mutate_points(|p| p.previous_location -= Vector2D(0.4, 0.0));
 
-        for _ in 0..10_000 {
+        for _ in 0..100 {
             bosh_sled = bosh_sled.apply_all_physics_ez(&track).unwrap_same();
         }
 
