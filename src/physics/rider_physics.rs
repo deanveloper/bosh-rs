@@ -1,7 +1,6 @@
 use crate::game::Track;
 use crate::game::Vector2D;
 use crate::physics::bone_physics::{joint_should_break, PhysicsBone};
-use crate::physics::line_physics;
 use crate::physics::line_physics::PhysicsPoint;
 use crate::rider::{Bosh, BoshSled, Entity, PointIndex, Sled};
 
@@ -23,7 +22,7 @@ where
 
     /// Pushes the points of `self` in accordance to gravity well logic.
     fn apply_gravity_wells(&mut self, track: &Track) {
-        self.mutate_points(|p| *p = line_physics::update_position(*p, track))
+        self.mutate_points(|p| p.apply_gravity_wells(track))
     }
 
     /// Applies bone physics to a list of bones. Moves self because

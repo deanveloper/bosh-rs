@@ -8,6 +8,7 @@ mod tests {
     use crate::game::Track;
     use crate::game::Vector2D;
     use crate::game::{Line, LineType};
+    use crate::physics::line_physics::PhysicsPoint;
     use crate::physics::rider_physics::PhysicsEntity;
     use crate::rider::{BoshSled, Entity};
 
@@ -24,6 +25,24 @@ mod tests {
             .map(|p| (p.location - p.previous_location))
             .sum();
         bosh_sum / bosh_sled.bosh.points.len() as f64
+    }
+
+    #[test]
+    fn update_gravity_wells_flat() {
+        let mut point = PhysicsPoint {
+            previous_location: Vector2D(10.23, 30.0),
+            location: Vector2D(10.23, 30.2345345),
+            friction: 0.0,
+        };
+        let line = Line {
+            flipped: false,
+            line_type: LineType::Normal,
+            ends: (Vector2D(0.0, 25.0), Vector2D(100.0, 25.0)),
+        };
+
+        point.apply_gravity_wells(&Track::new(&[], &vec![line]));
+
+        assert_eq!(point.location, Vector2D(10.23, 25.0))
     }
 
     #[test]

@@ -43,12 +43,12 @@ impl Vector2D {
 
     /// Rotates the vector 90 degrees to the left (counter-clockwise)
     pub fn rotate90_left(self) -> Vector2D {
-        Vector2D(-self.1, self.0)
+        Vector2D(self.1, -self.0)
     }
 
     /// Rotates the vector 90 degrees to the right (clockwise)
     pub fn rotate90_right(self) -> Vector2D {
-        Vector2D(self.1, -self.0)
+        Vector2D(-self.1, self.0)
     }
 
     /// Rotates the vector by some arbitrary number of radians

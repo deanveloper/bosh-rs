@@ -99,7 +99,7 @@ impl Track {
             .map(|p| (p, p.distance_squared(to_snap)))
             .filter(|(_, dist)| dist.total_cmp(&max_dist_sq).is_lt())
             .min_by(|(_, d1), (_, d2)| d1.total_cmp(d2))
-            .unwrap_or((to_snap, 0f64))
+            .unwrap_or((to_snap, 0.0))
             .0
     }
 
@@ -110,46 +110,42 @@ impl Track {
     ///  * the point is above the line
     ///  * the point is moving "upward"
     ///  * the point is outside of the line, including extensions
-    pub fn distance_below_line(&self, line: &Line, point: PhysicsPoint) -> f64 {
-        let (start, end) = line.ends;
-        let line_vec = end - start;
-        let point_from_start = point.location - start;
+    pub fn distance_below_line(&self, line: &Line, point: &PhysicsPoint) -> f64 {
+        let line_vec = line.as_vector2d();
+        let point_from_start = point.location - line.ends.0;
+        let perpendicular = line.perpendicular();
+
         let is_moving_into_line = {
-            let rot_vec = if line.flipped {
-                line_vec.rotate90_left()
-            } else {
-                line_vec.rotate90_right()
-            };
-            let dot = rot_vec.dot_product(point.location - point.previous_location);
-            dot > 0f64
+            let dot = perpendicular.dot_product(point.location - point.previous_location);
+            dot < 0.0
         };
         if !is_moving_into_line {
-            return 0f64;
+            return 0.0;
         }
 
         let line_length = line_vec.length_squared().sqrt();
         let line_normalized = line_vec / line_length;
 
-        let (ext_l, ext_r) = self.hitbox_extensions.get(line).unwrap_or(&(0f64, 0f64));
+        let (ext_l, ext_r) = self.hitbox_extensions.get(line).unwrap_or(&(0.0, 0.0));
         let (ext_l, ext_r) = (*ext_l, *ext_r);
-        let point_projected_on_line = point_from_start.dot_product(line_normalized);
-        if !(ext_l..=(ext_r + line_length)).contains(&point_projected_on_line) {
-            return 0f64;
+        let parallel_component = point_from_start.dot_product(line_normalized);
+        if !(ext_l..=(ext_r + line_length)).contains(&parallel_component) {
+            return 0.0;
         }
 
-        let distance_below = point_from_start.dot_product(line_normalized.rotate90_right());
-        if 0f64 < distance_below && distance_below < GRAVITY_WELL_HEIGHT {
+        let distance_below = (-perpendicular).dot_product(point_from_start);
+        if 0.0 < distance_below && distance_below < GRAVITY_WELL_HEIGHT {
             distance_below
         } else {
-            0f64
+            0.0
         }
     }
 
     /// Returns the amount that each side's hitbox should be extended by.
     fn calculate_hitbox_extensions_for_line(line: &Line, lines: &Vec<Line>) -> (f64, f64) {
         // number of units to extend by
-        let mut p0_extension = 0f64;
-        let mut p1_extension = 0f64;
+        let mut p0_extension = 0.0;
+        let mut p1_extension = 0.0;
         let length = line.length_squared().sqrt();
 
         for other in lines {
