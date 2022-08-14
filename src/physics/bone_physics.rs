@@ -1,5 +1,5 @@
 use crate::game::Vector2D;
-use crate::physics::rider_physics::PhysicsEntity;
+use crate::physics::entity_physics::PhysicsEntity;
 use crate::rider::{Bone, Joint, MounterBone, RepelBone, StandardBone};
 
 pub trait PhysicsBone: Bone {
@@ -19,7 +19,7 @@ impl PhysicsBone for StandardBone {
         Some(bone_resolve(
             p1.location,
             p2.location,
-            get_diff(self.resting_length, length) * 0.5,
+            get_diff(self.resting_length, length),
         ))
     }
 }
@@ -38,7 +38,7 @@ impl PhysicsBone for RepelBone {
             Some(bone_resolve(
                 p1.location,
                 p2.location,
-                get_diff(self.resting_length * self.length_factor * 0.5, length),
+                get_diff(self.resting_length * self.length_factor, length),
             ))
         }
     }
@@ -52,7 +52,7 @@ impl PhysicsBone for MounterBone {
         let length = (p2 - p1).length_squared().sqrt();
 
         let diff = get_diff(self.resting_length, length);
-        if diff > self.endurance {
+        if diff > self.endurance * self.resting_length * 0.5 {
             None
         } else {
             Some(bone_resolve(p1, p2, diff))
@@ -78,6 +78,6 @@ fn get_diff(resting_length: f64, current_length: f64) -> f64 {
     if current_length == 0.0 {
         0.0
     } else {
-        (current_length - resting_length) / current_length * 0.5
+        ((current_length - resting_length) / current_length) * 0.5
     }
 }

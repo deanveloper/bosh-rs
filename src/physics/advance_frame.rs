@@ -1,4 +1,4 @@
-use crate::physics::rider_physics::{PhysicsEntity, UpdateBonesResult};
+use crate::physics::entity_physics::{PhysicsEntity, UpdateBonesResult};
 use crate::rider::Entity;
 use crate::Track;
 

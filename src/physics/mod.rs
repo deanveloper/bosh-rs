@@ -1,15 +1,15 @@
 pub mod advance_frame;
 pub mod bone_physics;
+pub mod entity_physics;
 pub mod line_physics;
-pub mod rider_physics;
 
 #[cfg(test)]
 mod tests {
     use crate::game::Track;
     use crate::game::Vector2D;
     use crate::game::{Line, LineType};
+    use crate::physics::entity_physics::PhysicsEntity;
     use crate::physics::line_physics::PhysicsPoint;
-    use crate::physics::rider_physics::PhysicsEntity;
     use crate::rider::{BoshSled, Entity};
 
     fn avg_position(bosh_sled: &BoshSled) -> Vector2D {

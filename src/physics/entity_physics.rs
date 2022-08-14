@@ -75,16 +75,16 @@ where
 
         match &mut result {
             UpdateBonesResult::Same(t) => {
-                t.apply_gravity_wells(track);
-
                 t.next_points(gravity);
+
+                t.apply_gravity_wells(track);
             }
             UpdateBonesResult::Broken(bosh, sled) => {
-                bosh.apply_gravity_wells(track);
-                sled.apply_gravity_wells(track);
-
                 bosh.next_points(gravity);
                 sled.next_points(gravity);
+
+                bosh.apply_gravity_wells(track);
+                sled.apply_gravity_wells(track);
             }
         }
 
