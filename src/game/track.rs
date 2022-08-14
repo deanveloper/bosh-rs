@@ -80,12 +80,22 @@ impl Track {
     }
 
     /// Adds a new rider to the track.
-    pub fn create_rider(&mut self, entity: Entity) {
+    pub fn create_entity(&mut self, entity: Entity) {
         let position_cache = self.precomputed_rider_positions.get_mut();
         let initial_frame = position_cache.get_mut(0).unwrap();
         initial_frame.push(entity);
 
         position_cache.drain(1..);
+    }
+
+    /// Removes a rider from the track.
+    pub fn remove_entity(&mut self, entity: Entity) -> Option<()> {
+        let position_cache = self.precomputed_rider_positions.get_mut();
+        let initial_frame = position_cache.get_mut(0).unwrap();
+        initial_frame.remove(initial_frame.iter().position(|e| *e == entity)?);
+
+        position_cache.drain(1..);
+        Some(())
     }
 
     /// Snaps a point to the nearest line ending, or returns `to_snap` if
