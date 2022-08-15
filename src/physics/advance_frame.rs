@@ -1,23 +1,15 @@
-use crate::physics::entity_physics::{PhysicsEntity, UpdateBonesResult};
-use crate::rider::Entity;
+use crate::physics::entity_physics::UpdateBonesResult;
+use crate::rider::EntityStruct;
 use crate::Track;
 
 /// Runs the entire physics engine on a frame to get the next frame.
-pub fn frame_after(riders: &[Entity], track: &Track) -> Vec<Entity> {
+pub fn frame_after(riders: &[EntityStruct], track: &Track) -> Vec<EntityStruct> {
     riders
         .iter()
-        .flat_map(|r| match r.clone() {
-            Entity::BoshSled(bosh_sled) => match bosh_sled.apply_all_physics_ez(track) {
-                UpdateBonesResult::Same(bosh_sled) => vec![Entity::BoshSled(bosh_sled)],
-                UpdateBonesResult::Broken(bosh, sled) => {
-                    vec![Entity::Bosh(bosh), Entity::Sled(sled)]
-                }
-            },
-            Entity::Bosh(bosh) => {
-                vec![Entity::Bosh(bosh.apply_all_physics_ez(track).unwrap_same())]
-            }
-            Entity::Sled(sled) => {
-                vec![Entity::Sled(sled.apply_all_physics_ez(track).unwrap_same())]
+        .flat_map(|entity| match entity.clone().apply_all_physics_ez(track) {
+            UpdateBonesResult::Same(bosh_sled) => vec![bosh_sled],
+            UpdateBonesResult::Broken(bosh, sled) => {
+                vec![bosh, sled]
             }
         })
         .collect()

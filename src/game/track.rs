@@ -2,8 +2,7 @@ use crate::game::line::{Line, LineType};
 use crate::game::vector::Vector2D;
 use crate::linestore::grid::Grid;
 use crate::physics;
-use crate::physics::line_physics::PhysicsPoint;
-use crate::rider::Entity;
+use crate::rider::{EntityPoint, EntityStruct};
 use physics::advance_frame::frame_after;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -18,11 +17,11 @@ pub struct Track {
 
     hitbox_extensions: HashMap<Line, (f64, f64)>,
 
-    precomputed_rider_positions: RefCell<Vec<Vec<Entity>>>,
+    precomputed_rider_positions: RefCell<Vec<Vec<EntityStruct>>>,
 }
 
 impl Track {
-    pub fn new(starting_positions: &[Entity], lines: &Vec<Line>) -> Track {
+    pub fn new(starting_positions: &[EntityStruct], lines: &Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
             if line.line_type == LineType::Scenery {
@@ -64,7 +63,7 @@ impl Track {
     }
 
     /// Gets the rider positions for a zero-indexed frame.
-    pub fn rider_positions_at(&self, frame: usize) -> Vec<Entity> {
+    pub fn entity_positions_at(&self, frame: usize) -> Vec<EntityStruct> {
         let mut position_cache = self.precomputed_rider_positions.borrow_mut();
         if let Some(riders) = position_cache.get(frame) {
             riders.clone()
@@ -80,7 +79,7 @@ impl Track {
     }
 
     /// Adds a new rider to the track.
-    pub fn create_entity(&mut self, entity: Entity) {
+    pub fn create_entity(&mut self, entity: EntityStruct) {
         let position_cache = self.precomputed_rider_positions.get_mut();
         let initial_frame = position_cache.get_mut(0).unwrap();
         initial_frame.push(entity);
@@ -89,7 +88,7 @@ impl Track {
     }
 
     /// Removes a rider from the track.
-    pub fn remove_entity(&mut self, entity: Entity) -> Option<()> {
+    pub fn remove_entity(&mut self, entity: EntityStruct) -> Option<()> {
         let position_cache = self.precomputed_rider_positions.get_mut();
         let initial_frame = position_cache.get_mut(0).unwrap();
         initial_frame.remove(initial_frame.iter().position(|e| *e == entity)?);
@@ -120,7 +119,7 @@ impl Track {
     ///  * the point is above the line
     ///  * the point is moving "upward"
     ///  * the point is outside of the line, including extensions
-    pub fn distance_below_line(&self, line: &Line, point: &PhysicsPoint) -> f64 {
+    pub fn distance_below_line(&self, line: &Line, point: &EntityPoint) -> f64 {
         let line_vec = line.as_vector2d();
         let point_from_start = point.location - line.ends.0;
         let perpendicular = line.perpendicular();

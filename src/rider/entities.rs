@@ -1,75 +1,116 @@
 use std::collections::HashMap;
-use std::hash::Hash;
 
 use crate::game::Vector2D;
-use crate::physics::line_physics::PhysicsPoint;
-use crate::rider::bone::{Joint, MounterBone, RepelBone, StandardBone};
+use crate::rider::bone::{BoneStruct, BoneType};
+use crate::rider::point::{EntityPoint, PointIndex};
+use crate::rider::Joint;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Entity {
-    Bosh(Bosh),
-    Sled(Sled),
-    BoshSled(BoshSled),
-}
+pub struct EntityStruct {
+    pub points: HashMap<PointIndex, EntityPoint>,
 
-#[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
-pub enum PointIndex {
-    BoshLeftFoot = 0,
-    BoshRightFoot,
-    BoshLeftHand,
-    BoshRightHand,
-    BoshShoulder,
-    BoshButt,
-
-    SledPeg,
-    SledTail,
-    SledNose,
-    SledRope,
-}
-
-impl PointIndex {
-    pub fn is_bosh(&self) -> bool {
-        &PointIndex::BoshLeftFoot <= self && self <= &PointIndex::BoshButt
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Bosh {
-    pub points: HashMap<PointIndex, PhysicsPoint>,
-
-    pub standard_bones: Vec<StandardBone>,
-    pub repel_bones: Vec<RepelBone>,
-}
-
-#[derive(Clone, Debug)]
-pub struct Sled {
-    pub points: HashMap<PointIndex, PhysicsPoint>,
-
-    pub standard_bones: Vec<StandardBone>,
-}
-
-#[derive(Clone, Debug)]
-pub struct BoshSled {
-    pub bosh: Bosh,
-    pub sled: Sled,
-
-    pub bosh_mounter_bones: Vec<MounterBone>,
-    pub sled_mounter_bones: Vec<MounterBone>,
+    pub bones: Vec<BoneStruct>,
     pub joints: Vec<Joint>,
 }
 
-impl BoshSled {
-    pub fn new(bosh: Bosh, sled: Sled) -> BoshSled {
-        let mut points = bosh.points.clone();
-        points.extend(sled.points.clone().into_iter());
+impl EntityStruct {
+    /// Get a PhysicsPoint at a PointIndex
+    pub fn point_at(&self, index: PointIndex) -> &EntityPoint {
+        self.points
+            .get(&index)
+            .unwrap_or_else(|| panic!("invalid index {index:?}"))
+    }
 
-        BoshSled {
-            bosh,
-            sled,
-            bosh_mounter_bones: BoshSled::default_bosh_mounter_bones(&points),
-            sled_mounter_bones: BoshSled::default_sled_mounter_bones(&points),
-            joints: BoshSled::default_joints(),
+    /// Get a mutable reference to the PhysicsPoint at a point index
+    pub fn point_at_mut(&mut self, index: PointIndex) -> &mut EntityPoint {
+        self.points
+            .get_mut(&index)
+            .unwrap_or_else(|| panic!("invalid index {index:?}"))
+    }
+
+    pub fn default_boshsled() -> EntityStruct {
+        let points = boshsled::default_points();
+        let bones = boshsled::default_bones(&points);
+        let joints = boshsled::default_joints();
+        EntityStruct {
+            points,
+            bones,
+            joints,
         }
+    }
+
+    pub fn default_bosh() -> EntityStruct {
+        let points = bosh::default_points();
+        let bones = bosh::default_bones(&points);
+        EntityStruct {
+            points,
+            bones,
+            joints: Default::default(),
+        }
+    }
+
+    pub fn default_sled() -> EntityStruct {
+        let points = sled::default_points();
+        let bones = sled::default_bones(&points);
+        EntityStruct {
+            points,
+            bones,
+            joints: Default::default(),
+        }
+    }
+}
+
+pub mod boshsled {
+    use super::*;
+
+    pub const DEFAULT_SLED_MOUNT_BONES: usize = 3;
+    pub const DEFAULT_BOSH_MOUNT_BONES: usize = 5;
+    pub const DEFAULT_BONE_COUNT: usize = bosh::DEFAULT_BONE_COUNT
+        + sled::DEFAULT_BONE_COUNT
+        + DEFAULT_SLED_MOUNT_BONES
+        + DEFAULT_BOSH_MOUNT_BONES;
+
+    pub fn default_points() -> HashMap<PointIndex, EntityPoint> {
+        sled::default_points()
+            .into_iter()
+            .chain(bosh::default_points())
+            .collect()
+    }
+
+    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<BoneStruct> {
+        vec![
+            sled::default_bones(points),
+            default_sled_mounter_bones(points),
+            bosh::default_bones(points),
+            default_bosh_mounter_bones(points),
+        ]
+        .concat()
+    }
+
+    // TODO - precompute resting lengths of bones
+    pub fn default_sled_mounter_bones(
+        points: &HashMap<PointIndex, EntityPoint>,
+    ) -> Vec<BoneStruct> {
+        make_bones(
+            vec![
+                (
+                    PointIndex::SledPeg,
+                    PointIndex::BoshButt,
+                    BoneType::Mount { endurance: 0.057 },
+                ),
+                (
+                    PointIndex::SledTail,
+                    PointIndex::BoshButt,
+                    BoneType::Mount { endurance: 0.057 },
+                ),
+                (
+                    PointIndex::SledNose,
+                    PointIndex::BoshButt,
+                    BoneType::Mount { endurance: 0.057 },
+                ),
+            ],
+            points,
+        )
     }
 
     pub fn default_joints() -> Vec<Joint> {
@@ -86,83 +127,52 @@ impl BoshSled {
     }
 
     // TODO - precompute resting lengths of bones
-    pub fn default_sled_mounter_bones(
-        points: &HashMap<PointIndex, PhysicsPoint>,
-    ) -> Vec<MounterBone> {
-        make_mounter_bones(
+    fn default_bosh_mounter_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<BoneStruct> {
+        make_bones(
             vec![
-                (PointIndex::SledPeg, PointIndex::BoshButt, 0.057),
-                (PointIndex::SledTail, PointIndex::BoshButt, 0.057),
-                (PointIndex::SledNose, PointIndex::BoshButt, 0.057),
+                (
+                    PointIndex::BoshShoulder,
+                    PointIndex::SledPeg,
+                    BoneType::Mount { endurance: 0.057 },
+                ),
+                (
+                    PointIndex::SledRope,
+                    PointIndex::BoshLeftHand,
+                    BoneType::Mount { endurance: 0.057 },
+                ),
+                (
+                    PointIndex::SledRope,
+                    PointIndex::BoshRightHand,
+                    BoneType::Mount { endurance: 0.057 },
+                ),
+                (
+                    PointIndex::BoshLeftFoot,
+                    PointIndex::SledNose,
+                    BoneType::Mount { endurance: 0.057 },
+                ),
+                (
+                    PointIndex::BoshRightFoot,
+                    PointIndex::SledNose,
+                    BoneType::Mount { endurance: 0.057 },
+                ),
             ],
             points,
         )
     }
-
-    // TODO - precompute resting lengths of bones
-    pub fn default_bosh_mounter_bones(
-        points: &HashMap<PointIndex, PhysicsPoint>,
-    ) -> Vec<MounterBone> {
-        make_mounter_bones(
-            vec![
-                (PointIndex::BoshShoulder, PointIndex::SledPeg, 0.057),
-                (PointIndex::SledRope, PointIndex::BoshLeftHand, 0.057),
-                (PointIndex::SledRope, PointIndex::BoshRightHand, 0.057),
-                (PointIndex::BoshLeftFoot, PointIndex::SledNose, 0.057),
-                (PointIndex::BoshRightFoot, PointIndex::SledNose, 0.057),
-            ],
-            points,
-        )
-    }
 }
 
-impl Default for Bosh {
-    fn default() -> Bosh {
-        let points = Bosh::default_points();
-        Bosh {
-            points: points.clone(),
-            standard_bones: Bosh::default_standard_bones(&points),
-            repel_bones: Bosh::default_repel_bones(&points),
-        }
-    }
-}
+pub mod bosh {
+    use super::*;
 
-impl Default for Sled {
-    fn default() -> Sled {
-        let points = Sled::default_points();
-        Sled {
-            points: points.clone(),
-            standard_bones: Sled::default_standard_bones(&points),
-        }
-    }
-}
+    pub const DEFAULT_BONE_COUNT: usize = 8;
 
-impl Default for BoshSled {
-    fn default() -> BoshSled {
-        let bosh: Bosh = Default::default();
-        let sled: Sled = Default::default();
-
-        let mut points = bosh.points.clone();
-        points.extend(sled.points.clone().into_iter());
-
-        BoshSled {
-            bosh,
-            sled,
-            bosh_mounter_bones: BoshSled::default_bosh_mounter_bones(&points),
-            sled_mounter_bones: BoshSled::default_sled_mounter_bones(&points),
-            joints: BoshSled::default_joints(),
-        }
-    }
-}
-
-impl Bosh {
-    pub fn default_points() -> HashMap<PointIndex, PhysicsPoint> {
-        let left_foot = make_physics_point(Vector2D(10.0, 5.0), 0.0);
-        let right_foot = make_physics_point(Vector2D(10.0, 5.0), 0.0);
-        let left_hand = make_physics_point(Vector2D(11.5, -5.0), 0.1);
-        let right_hand = make_physics_point(Vector2D(11.5, -5.0), 0.1);
-        let shoulder = make_physics_point(Vector2D(5.0, -5.5), 0.8);
-        let butt = make_physics_point(Vector2D(5.0, 0.0), 0.8);
+    pub fn default_points() -> HashMap<PointIndex, EntityPoint> {
+        let left_foot = make_entity_point(Vector2D(10.0, 5.0), 0.0);
+        let right_foot = make_entity_point(Vector2D(10.0, 5.0), 0.0);
+        let left_hand = make_entity_point(Vector2D(11.5, -5.0), 0.1);
+        let right_hand = make_entity_point(Vector2D(11.5, -5.0), 0.1);
+        let shoulder = make_entity_point(Vector2D(5.0, -5.5), 0.8);
+        let butt = make_entity_point(Vector2D(5.0, 0.0), 0.8);
 
         HashMap::from([
             (PointIndex::BoshLeftFoot, left_foot),
@@ -175,38 +185,65 @@ impl Bosh {
     }
 
     // TODO - precompute resting lengths of bones
-    pub fn default_standard_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<StandardBone> {
-        make_standard_bones(
+    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<BoneStruct> {
+        make_bones(
             vec![
-                (PointIndex::BoshShoulder, PointIndex::BoshButt),
-                (PointIndex::BoshShoulder, PointIndex::BoshLeftHand),
-                (PointIndex::BoshShoulder, PointIndex::BoshRightHand),
-                (PointIndex::BoshButt, PointIndex::BoshLeftFoot),
-                (PointIndex::BoshButt, PointIndex::BoshRightFoot),
-                (PointIndex::BoshShoulder, PointIndex::BoshRightHand),
-            ],
-            points,
-        )
-    }
-
-    // TODO - precompute resting lengths of bones
-    pub fn default_repel_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<RepelBone> {
-        make_repel_bones(
-            vec![
-                (PointIndex::BoshShoulder, PointIndex::BoshLeftFoot, 0.5),
-                (PointIndex::BoshShoulder, PointIndex::BoshRightFoot, 0.5),
+                (
+                    PointIndex::BoshShoulder,
+                    PointIndex::BoshButt,
+                    BoneType::Normal,
+                ),
+                (
+                    PointIndex::BoshShoulder,
+                    PointIndex::BoshLeftHand,
+                    BoneType::Normal,
+                ),
+                (
+                    PointIndex::BoshShoulder,
+                    PointIndex::BoshRightHand,
+                    BoneType::Normal,
+                ),
+                (
+                    PointIndex::BoshButt,
+                    PointIndex::BoshLeftFoot,
+                    BoneType::Normal,
+                ),
+                (
+                    PointIndex::BoshButt,
+                    PointIndex::BoshRightFoot,
+                    BoneType::Normal,
+                ),
+                (
+                    PointIndex::BoshShoulder,
+                    PointIndex::BoshRightHand,
+                    BoneType::Normal,
+                ),
+                (
+                    PointIndex::BoshShoulder,
+                    PointIndex::BoshLeftFoot,
+                    BoneType::Repel { length_factor: 0.5 },
+                ),
+                (
+                    PointIndex::BoshShoulder,
+                    PointIndex::BoshRightFoot,
+                    BoneType::Repel { length_factor: 0.5 },
+                ),
             ],
             points,
         )
     }
 }
 
-impl Sled {
-    pub fn default_points() -> HashMap<PointIndex, PhysicsPoint> {
-        let peg = make_physics_point(Vector2D(0.0, 0.0), 0.8);
-        let nose = make_physics_point(Vector2D(15.0, 5.0), 0.0);
-        let tail = make_physics_point(Vector2D(0.0, 5.0), 0.0);
-        let rope = make_physics_point(Vector2D(17.5, 0.0), 0.0);
+mod sled {
+    use super::*;
+
+    pub const DEFAULT_BONE_COUNT: usize = 6;
+
+    pub fn default_points() -> HashMap<PointIndex, EntityPoint> {
+        let peg = make_entity_point(Vector2D(0.0, 0.0), 0.8);
+        let nose = make_entity_point(Vector2D(15.0, 5.0), 0.0);
+        let tail = make_entity_point(Vector2D(0.0, 5.0), 0.0);
+        let rope = make_entity_point(Vector2D(17.5, 0.0), 0.0);
 
         HashMap::from([
             (PointIndex::SledPeg, peg),
@@ -216,102 +253,51 @@ impl Sled {
         ])
     }
 
-    // TODO - precompute resting lengths of bones
-    pub fn default_standard_bones(points: &HashMap<PointIndex, PhysicsPoint>) -> Vec<StandardBone> {
-        make_standard_bones(
+    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<BoneStruct> {
+        make_bones(
             vec![
-                (PointIndex::SledPeg, PointIndex::SledTail),
-                (PointIndex::SledTail, PointIndex::SledNose),
-                (PointIndex::SledNose, PointIndex::SledRope),
-                (PointIndex::SledRope, PointIndex::SledPeg),
-                (PointIndex::SledPeg, PointIndex::SledNose),
-                (PointIndex::SledRope, PointIndex::SledTail),
+                (PointIndex::SledPeg, PointIndex::SledTail, BoneType::Normal),
+                (PointIndex::SledTail, PointIndex::SledNose, BoneType::Normal),
+                (PointIndex::SledNose, PointIndex::SledRope, BoneType::Normal),
+                (PointIndex::SledRope, PointIndex::SledPeg, BoneType::Normal),
+                (PointIndex::SledPeg, PointIndex::SledNose, BoneType::Normal),
+                (PointIndex::SledRope, PointIndex::SledTail, BoneType::Normal),
             ],
             points,
         )
     }
 }
 
-impl PartialEq for Bosh {
-    fn eq(&self, other: &Self) -> bool {
-        self.points == other.points
-    }
-}
-impl Eq for Bosh {}
-
-impl PartialEq for Sled {
-    fn eq(&self, other: &Self) -> bool {
-        self.points == other.points
-    }
-}
-impl Eq for Sled {}
-
-impl PartialEq for BoshSled {
-    fn eq(&self, other: &Self) -> bool {
-        self.bosh == other.bosh && self.sled == other.sled
-    }
-}
-impl Eq for BoshSled {}
-
 // ==== PRIVATE UTIL FUNCTIONS ====
 
-fn make_physics_point(loc: Vector2D, friction: f64) -> PhysicsPoint {
-    PhysicsPoint {
+fn make_entity_point(loc: Vector2D, friction: f64) -> EntityPoint {
+    EntityPoint {
         previous_location: loc,
         location: loc,
         friction,
     }
 }
+
+fn make_bones(
+    bones: Vec<(PointIndex, PointIndex, BoneType)>,
+    point_map: &HashMap<PointIndex, EntityPoint>,
+) -> Vec<BoneStruct> {
+    bones
+        .iter()
+        .map(|(p1, p2, bone_type)| BoneStruct {
+            p1: *p1,
+            p2: *p2,
+            resting_length: length_between(p1, p2, point_map),
+            bone_type: *bone_type,
+        })
+        .collect()
+}
 fn length_between(
     p1: &PointIndex,
     p2: &PointIndex,
-    point_map: &HashMap<PointIndex, PhysicsPoint>,
+    point_map: &HashMap<PointIndex, EntityPoint>,
 ) -> f64 {
     (point_map.get(p2).expect("").location - point_map.get(p1).expect("").location)
         .length_squared()
         .sqrt()
-}
-
-fn make_repel_bones(
-    bones: Vec<(PointIndex, PointIndex, f64)>,
-    point_map: &HashMap<PointIndex, PhysicsPoint>,
-) -> Vec<RepelBone> {
-    bones
-        .iter()
-        .map(|(p1, p2, length_factor)| RepelBone {
-            p1: *p1,
-            p2: *p2,
-            length_factor: *length_factor,
-            resting_length: length_between(p1, p2, point_map),
-        })
-        .collect()
-}
-
-fn make_standard_bones(
-    bones: Vec<(PointIndex, PointIndex)>,
-    point_map: &HashMap<PointIndex, PhysicsPoint>,
-) -> Vec<StandardBone> {
-    bones
-        .iter()
-        .map(|(p1, p2)| StandardBone {
-            p1: *p1,
-            p2: *p2,
-            resting_length: length_between(p1, p2, point_map),
-        })
-        .collect()
-}
-
-fn make_mounter_bones(
-    bones: Vec<(PointIndex, PointIndex, f64)>,
-    point_map: &HashMap<PointIndex, PhysicsPoint>,
-) -> Vec<MounterBone> {
-    bones
-        .iter()
-        .map(|(p1, p2, endurance)| MounterBone {
-            p1: *p1,
-            p2: *p2,
-            endurance: *endurance,
-            resting_length: length_between(p1, p2, point_map),
-        })
-        .collect()
 }
