@@ -2,7 +2,7 @@ use crate::game::line::{Line, LineType};
 use crate::game::vector::Vector2D;
 use crate::linestore::grid::Grid;
 use crate::physics;
-use crate::rider::{EntityPoint, EntityStruct};
+use crate::rider::{EntityPoint, Entity};
 use physics::advance_frame::frame_after;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -17,11 +17,11 @@ pub struct Track {
 
     hitbox_extensions: HashMap<Line, (f64, f64)>,
 
-    precomputed_rider_positions: RefCell<Vec<Vec<EntityStruct>>>,
+    precomputed_rider_positions: RefCell<Vec<Vec<Entity>>>,
 }
 
 impl Track {
-    pub fn new(starting_positions: &[EntityStruct], lines: &Vec<Line>) -> Track {
+    pub fn new(starting_positions: &[Entity], lines: &Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
             if line.line_type == LineType::Scenery {
@@ -63,7 +63,7 @@ impl Track {
     }
 
     /// Gets the rider positions for a zero-indexed frame.
-    pub fn entity_positions_at(&self, frame: usize) -> Vec<EntityStruct> {
+    pub fn entity_positions_at(&self, frame: usize) -> Vec<Entity> {
         let mut position_cache = self.precomputed_rider_positions.borrow_mut();
         if let Some(riders) = position_cache.get(frame) {
             riders.clone()
@@ -79,7 +79,7 @@ impl Track {
     }
 
     /// Adds a new rider to the track.
-    pub fn create_entity(&mut self, entity: EntityStruct) {
+    pub fn create_entity(&mut self, entity: Entity) {
         let position_cache = self.precomputed_rider_positions.get_mut();
         let initial_frame = position_cache.get_mut(0).unwrap();
         initial_frame.push(entity);
@@ -88,7 +88,7 @@ impl Track {
     }
 
     /// Removes a rider from the track.
-    pub fn remove_entity(&mut self, entity: EntityStruct) -> Option<()> {
+    pub fn remove_entity(&mut self, entity: Entity) -> Option<()> {
         let position_cache = self.precomputed_rider_positions.get_mut();
         let initial_frame = position_cache.get_mut(0).unwrap();
         initial_frame.remove(initial_frame.iter().position(|e| *e == entity)?);

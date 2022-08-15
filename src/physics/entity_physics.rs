@@ -2,9 +2,9 @@ use crate::game::Track;
 use crate::game::Vector2D;
 use crate::physics::bone_physics::{joint_should_break, next_bone_locations};
 use crate::physics::line_physics::apply_gravity_wells;
-use crate::rider::{BoneType, EntityPoint, EntityStruct};
+use crate::rider::{BoneType, EntityPoint, Entity};
 
-pub type PhysicsEntity = EntityStruct;
+pub type PhysicsEntity = Entity;
 
 impl PhysicsEntity {
     /// Utility function for applying a mapping to all points of the entity

@@ -1,7 +1,7 @@
 use crate::rider::PointIndex;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct BoneStruct {
+pub struct Bone {
     pub p1: PointIndex,
     pub p2: PointIndex,
     pub resting_length: f64,
@@ -9,7 +9,7 @@ pub struct BoneStruct {
     pub bone_type: BoneType,
 }
 
-impl BoneStruct {
+impl Bone {
     pub fn is_bosh_bone(&self) -> bool {
         self.p1.is_bosh() && self.p2.is_bosh()
     }

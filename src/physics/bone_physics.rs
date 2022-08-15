@@ -1,12 +1,9 @@
 use crate::game::Vector2D;
-use crate::rider::{BoneStruct, BoneType, EntityStruct, Joint};
+use crate::rider::{Bone, BoneType, Entity, Joint};
 
 /// Returns Some((p1, p2)) for the bone-bounded locations, or None if the bone should break.
 /// Noteworthy that only bones of type Mount are breakable.
-pub fn next_bone_locations(
-    bone: &BoneStruct,
-    entity: &EntityStruct,
-) -> Option<(Vector2D, Vector2D)> {
+pub fn next_bone_locations(bone: &Bone, entity: &Entity) -> Option<(Vector2D, Vector2D)> {
     let p1 = entity.point_at(bone.p1);
     let p2 = entity.point_at(bone.p2);
 
@@ -40,7 +37,7 @@ pub fn next_bone_locations(
     }
 }
 
-pub fn joint_should_break(joint: &Joint, entity: &EntityStruct) -> bool {
+pub fn joint_should_break(joint: &Joint, entity: &Entity) -> bool {
     let p1 = entity.point_at(joint.pair1.0);
     let p2 = entity.point_at(joint.pair1.1);
     let q1 = entity.point_at(joint.pair2.0);

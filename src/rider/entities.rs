@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 
 use crate::game::Vector2D;
-use crate::rider::bone::{BoneStruct, BoneType};
+use crate::rider::bone::{Bone, BoneType};
 use crate::rider::point::{EntityPoint, PointIndex};
 use crate::rider::Joint;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct EntityStruct {
+pub struct Entity {
     pub points: HashMap<PointIndex, EntityPoint>,
 
-    pub bones: Vec<BoneStruct>,
+    pub bones: Vec<Bone>,
     pub joints: Vec<Joint>,
 }
 
-impl EntityStruct {
+impl Entity {
     /// Get a PhysicsPoint at a PointIndex
     pub fn point_at(&self, index: PointIndex) -> &EntityPoint {
         self.points
@@ -28,31 +28,31 @@ impl EntityStruct {
             .unwrap_or_else(|| panic!("invalid index {index:?}"))
     }
 
-    pub fn default_boshsled() -> EntityStruct {
+    pub fn default_boshsled() -> Entity {
         let points = boshsled::default_points();
         let bones = boshsled::default_bones(&points);
         let joints = boshsled::default_joints();
-        EntityStruct {
+        Entity {
             points,
             bones,
             joints,
         }
     }
 
-    pub fn default_bosh() -> EntityStruct {
+    pub fn default_bosh() -> Entity {
         let points = bosh::default_points();
         let bones = bosh::default_bones(&points);
-        EntityStruct {
+        Entity {
             points,
             bones,
             joints: Default::default(),
         }
     }
 
-    pub fn default_sled() -> EntityStruct {
+    pub fn default_sled() -> Entity {
         let points = sled::default_points();
         let bones = sled::default_bones(&points);
-        EntityStruct {
+        Entity {
             points,
             bones,
             joints: Default::default(),
@@ -77,7 +77,7 @@ pub mod boshsled {
             .collect()
     }
 
-    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<BoneStruct> {
+    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<Bone> {
         vec![
             sled::default_bones(points),
             default_sled_mounter_bones(points),
@@ -88,9 +88,7 @@ pub mod boshsled {
     }
 
     // TODO - precompute resting lengths of bones
-    pub fn default_sled_mounter_bones(
-        points: &HashMap<PointIndex, EntityPoint>,
-    ) -> Vec<BoneStruct> {
+    pub fn default_sled_mounter_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<Bone> {
         make_bones(
             vec![
                 (
@@ -127,7 +125,7 @@ pub mod boshsled {
     }
 
     // TODO - precompute resting lengths of bones
-    fn default_bosh_mounter_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<BoneStruct> {
+    fn default_bosh_mounter_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<Bone> {
         make_bones(
             vec![
                 (
@@ -185,7 +183,7 @@ pub mod bosh {
     }
 
     // TODO - precompute resting lengths of bones
-    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<BoneStruct> {
+    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<Bone> {
         make_bones(
             vec![
                 (
@@ -253,7 +251,7 @@ mod sled {
         ])
     }
 
-    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<BoneStruct> {
+    pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<Bone> {
         make_bones(
             vec![
                 (PointIndex::SledPeg, PointIndex::SledTail, BoneType::Normal),
@@ -281,10 +279,10 @@ fn make_entity_point(loc: Vector2D, friction: f64) -> EntityPoint {
 fn make_bones(
     bones: Vec<(PointIndex, PointIndex, BoneType)>,
     point_map: &HashMap<PointIndex, EntityPoint>,
-) -> Vec<BoneStruct> {
+) -> Vec<Bone> {
     bones
         .iter()
-        .map(|(p1, p2, bone_type)| BoneStruct {
+        .map(|(p1, p2, bone_type)| Bone {
             p1: *p1,
             p2: *p2,
             resting_length: length_between(p1, p2, point_map),

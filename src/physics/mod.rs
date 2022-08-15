@@ -9,15 +9,15 @@ mod tests {
     use crate::game::Vector2D;
     use crate::game::{Line, LineType};
     use crate::physics::line_physics::apply_gravity_wells;
-    use crate::rider::{BoneStruct, BoneType, EntityPoint, EntityStruct, PointIndex};
+    use crate::rider::{Bone, BoneType, Entity, EntityPoint, PointIndex};
     use std::collections::HashMap;
 
-    fn _avg_position(entity: &EntityStruct) -> Vector2D {
+    fn _avg_position(entity: &Entity) -> Vector2D {
         let bosh_sum: Vector2D = entity.points.values().map(|p| p.location).sum();
         bosh_sum / entity.points.len() as f64
     }
 
-    fn avg_velocity(entity: &EntityStruct) -> Vector2D {
+    fn avg_velocity(entity: &Entity) -> Vector2D {
         let bosh_sum: Vector2D = entity
             .points
             .values()
@@ -28,7 +28,7 @@ mod tests {
 
     #[test]
     fn update_bones_contract() {
-        let bosh = EntityStruct {
+        let bosh = Entity {
             points: HashMap::from([
                 (
                     PointIndex::BoshShoulder,
@@ -47,7 +47,7 @@ mod tests {
                     },
                 ),
             ]),
-            bones: vec![BoneStruct {
+            bones: vec![Bone {
                 p1: PointIndex::BoshShoulder,
                 p2: PointIndex::BoshButt,
                 resting_length: 5.0,
@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn update_bones_expand() {
-        let bosh = EntityStruct {
+        let bosh = Entity {
             points: HashMap::from([
                 (
                     PointIndex::BoshShoulder,
@@ -102,7 +102,7 @@ mod tests {
                     },
                 ),
             ]),
-            bones: vec![BoneStruct {
+            bones: vec![Bone {
                 p1: PointIndex::BoshShoulder,
                 p2: PointIndex::BoshButt,
                 resting_length: 5.0,
@@ -156,7 +156,7 @@ mod tests {
 
     #[test]
     fn rider_physics_bosh_sled_at_rest() {
-        let original_bosh_sled = EntityStruct::default_boshsled();
+        let original_bosh_sled = Entity::default_boshsled();
         let new_bosh_sled = original_bosh_sled.clone();
         let new_bosh_sled = new_bosh_sled.apply_bones().unwrap_same();
 
@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn rider_physics_bosh_falling() {
-        let mut bosh_sled = EntityStruct::default_boshsled();
+        let mut bosh_sled = Entity::default_boshsled();
         bosh_sled.mutate_points(|p| p.previous_location -= Vector2D(0.4, 0.0));
 
         let track = Track::new(&vec![bosh_sled], &vec![]);
@@ -185,7 +185,7 @@ mod tests {
 
     #[test]
     fn rider_physics_bosh_with_line() {
-        let mut bosh_sled = EntityStruct::default_boshsled();
+        let mut bosh_sled = Entity::default_boshsled();
         bosh_sled.mutate_points(|p| p.previous_location -= Vector2D(0.4, 0.0));
         let track = Track::new(
             &vec![bosh_sled],
