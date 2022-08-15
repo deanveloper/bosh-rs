@@ -1,63 +1,46 @@
 use crate::game::Vector2D;
-use crate::physics::entity_physics::PhysicsEntity;
-use crate::rider::{Bone, Joint, MounterBone, RepelBone, StandardBone};
+use crate::rider::{BoneStruct, BoneType, EntityStruct, Joint};
 
-pub trait PhysicsBone: Bone {
-    /// Returns Some((p1, p2)) for the bone-bounded locations, or None if the bone should break.
-    /// Noteworthy that only MounterBones are breakable.
-    fn next_locations<E: PhysicsEntity>(&self, entity: &E) -> Option<(Vector2D, Vector2D)>;
-}
+/// Returns Some((p1, p2)) for the bone-bounded locations, or None if the bone should break.
+/// Noteworthy that only bones of type Mount are breakable.
+pub fn next_bone_locations(
+    bone: &BoneStruct,
+    entity: &EntityStruct,
+) -> Option<(Vector2D, Vector2D)> {
+    let p1 = entity.point_at(bone.p1);
+    let p2 = entity.point_at(bone.p2);
 
-impl PhysicsBone for StandardBone {
-    fn next_locations<E: PhysicsEntity>(&self, entity: &E) -> Option<(Vector2D, Vector2D)> {
-        let p1 = entity.point_at(self.p1);
-        let p2 = entity.point_at(self.p2);
+    let length = p2.location.distance_squared(p1.location).sqrt();
 
-        let length = p2.location.distance_squared(p1.location).sqrt();
-
-        Some(bone_resolve(
+    match bone.bone_type {
+        BoneType::Normal => Some(bone_resolve(
             p1.location,
             p2.location,
-            get_diff(self.resting_length, length),
-        ))
-    }
-}
-
-impl PhysicsBone for RepelBone {
-    fn next_locations<E: PhysicsEntity>(&self, entity: &E) -> Option<(Vector2D, Vector2D)> {
-        let p1 = entity.point_at(self.p1);
-        let p2 = entity.point_at(self.p2);
-
-        let length = p2.location.distance_squared(p1.location).sqrt();
-
-        if length >= self.resting_length * self.length_factor {
-            Some((p1.location, p2.location))
-        } else {
-            Some(bone_resolve(
-                p1.location,
-                p2.location,
-                get_diff(self.resting_length * self.length_factor, length),
-            ))
+            get_diff(bone.resting_length, length),
+        )),
+        BoneType::Repel { length_factor } => {
+            if length >= bone.resting_length * length_factor {
+                Some((p1.location, p2.location))
+            } else {
+                Some(bone_resolve(
+                    p1.location,
+                    p2.location,
+                    get_diff(bone.resting_length * length_factor, length),
+                ))
+            }
+        }
+        BoneType::Mount { endurance } => {
+            let diff = get_diff(bone.resting_length, length);
+            if diff > endurance * bone.resting_length * 0.5 {
+                None
+            } else {
+                Some(bone_resolve(p1.location, p2.location, diff))
+            }
         }
     }
 }
 
-impl PhysicsBone for MounterBone {
-    fn next_locations<E: PhysicsEntity>(&self, entity: &E) -> Option<(Vector2D, Vector2D)> {
-        let p1 = entity.point_at(self.p1).location;
-        let p2 = entity.point_at(self.p2).location;
-
-        let length = (p2 - p1).length_squared().sqrt();
-
-        let diff = get_diff(self.resting_length, length);
-        if diff > self.endurance * self.resting_length * 0.5 {
-            None
-        } else {
-            Some(bone_resolve(p1, p2, diff))
-        }
-    }
-}
-pub fn joint_should_break<E: PhysicsEntity>(joint: &Joint, entity: &E) -> bool {
+pub fn joint_should_break(joint: &Joint, entity: &EntityStruct) -> bool {
     let p1 = entity.point_at(joint.pair1.0);
     let p2 = entity.point_at(joint.pair1.1);
     let q1 = entity.point_at(joint.pair2.0);
