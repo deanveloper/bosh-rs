@@ -2,16 +2,11 @@ use crate::game::Track;
 use crate::game::Vector2D;
 use crate::physics::bone_physics::{joint_should_break, next_bone_locations};
 use crate::physics::line_physics::apply_gravity_wells;
-use crate::rider::{BoneType, EntityPoint, Entity};
+use crate::rider::{Entity, EntityPoint};
 
 pub type PhysicsEntity = Entity;
 
 impl PhysicsEntity {
-    /// Utility function for applying a mapping to all points of the entity
-    pub fn mutate_points<F: FnMut(&mut EntityPoint)>(&mut self, mapper: F) {
-        self.points.values_mut().for_each(mapper);
-    }
-
     /// Pushes the points of `self` in accordance to gravity well logic.
     pub fn apply_gravity_wells(&mut self, track: &Track) {
         self.mutate_points(|p| apply_gravity_wells(p, track))
@@ -31,7 +26,7 @@ impl PhysicsEntity {
         }
 
         if broken {
-            let (bosh, sled) = UpdateBonesResult::split(self);
+            let (bosh, sled) = self.split();
             UpdateBonesResult::Broken(bosh, sled)
         } else {
             UpdateBonesResult::Same(self)
@@ -56,7 +51,7 @@ impl PhysicsEntity {
     /// does nothing on non-boshsleds
     pub fn apply_all_joints(self) -> UpdateBonesResult {
         if self.joints.iter().any(|j| joint_should_break(j, &self)) {
-            let (bosh, sled) = UpdateBonesResult::split(self);
+            let (bosh, sled) = self.split();
             UpdateBonesResult::Broken(bosh, sled)
         } else {
             UpdateBonesResult::Same(self)
@@ -115,32 +110,6 @@ pub enum UpdateBonesResult {
 }
 
 impl UpdateBonesResult {
-    pub fn split(entity: PhysicsEntity) -> (PhysicsEntity, PhysicsEntity) {
-        let (bosh_points, sled_points) = entity
-            .points
-            .into_iter()
-            .partition(|(index, _)| index.is_bosh());
-
-        let (bosh_bones, sled_bones) = entity
-            .bones
-            .into_iter()
-            .filter(|bone| !matches!(bone.bone_type, BoneType::Mount { .. }))
-            .filter(|bone| bone.is_bosh_bone() || bone.is_sled_bone())
-            .partition(|bone| bone.is_bosh_bone());
-
-        (
-            PhysicsEntity {
-                points: bosh_points,
-                bones: bosh_bones,
-                joints: vec![],
-            },
-            PhysicsEntity {
-                points: sled_points,
-                bones: sled_bones,
-                joints: vec![],
-            },
-        )
-    }
     pub fn unwrap_same(self) -> PhysicsEntity {
         if let UpdateBonesResult::Same(entity) = self {
             entity
