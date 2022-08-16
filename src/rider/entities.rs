@@ -28,6 +28,11 @@ impl Entity {
             .unwrap_or_else(|| panic!("invalid index {index:?}"))
     }
 
+    /// Utility function for applying a mapping to all points of the entity
+    pub fn mutate_points<F: FnMut(&mut EntityPoint)>(&mut self, mapper: F) {
+        self.points.values_mut().for_each(mapper);
+    }
+
     pub fn default_boshsled() -> Entity {
         let points = boshsled::default_points();
         let bones = boshsled::default_bones(&points);
@@ -57,6 +62,46 @@ impl Entity {
             bones,
             joints: Default::default(),
         }
+    }
+
+    pub fn is_bosh(&self) -> bool {
+        self.points.keys().all(|p| p.is_bosh())
+    }
+
+    pub fn is_sled(&self) -> bool {
+        self.points.keys().all(|p| !p.is_bosh())
+    }
+
+    pub fn is_bosh_sled(&self) -> bool {
+        !self.is_bosh() && !self.is_sled()
+    }
+
+    /// Splits a boshsled into a bosh and a sled
+    pub fn split(self) -> (Entity, Entity) {
+        let (bosh_points, sled_points) = self
+            .points
+            .into_iter()
+            .partition(|(index, _)| index.is_bosh());
+
+        let (bosh_bones, sled_bones) = self
+            .bones
+            .into_iter()
+            .filter(|bone| !matches!(bone.bone_type, BoneType::Mount { .. }))
+            .filter(|bone| bone.is_bosh_bone() || bone.is_sled_bone())
+            .partition(|bone| bone.is_bosh_bone());
+
+        (
+            Entity {
+                points: bosh_points,
+                bones: bosh_bones,
+                joints: vec![],
+            },
+            Entity {
+                points: sled_points,
+                bones: sled_bones,
+                joints: vec![],
+            },
+        )
     }
 }
 

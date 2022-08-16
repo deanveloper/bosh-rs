@@ -2,6 +2,7 @@ mod game;
 mod linestore;
 pub mod physics;
 pub mod rider;
+pub mod serialization;
 
 pub use game::*;
 

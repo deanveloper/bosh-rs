@@ -149,7 +149,7 @@ mod tests {
             ends: (Vector2D(0.0, 25.0), Vector2D(100.0, 25.0)),
         };
 
-        apply_gravity_wells(&mut point, &Track::new(&[], &vec![line]));
+        apply_gravity_wells(&mut point, &Track::new(vec![], &vec![line]));
 
         assert_eq!(point.location, Vector2D(10.23, 25.0))
     }
@@ -172,7 +172,7 @@ mod tests {
         let mut bosh_sled = Entity::default_boshsled();
         bosh_sled.mutate_points(|p| p.previous_location -= Vector2D(0.4, 0.0));
 
-        let track = Track::new(&vec![bosh_sled], &vec![]);
+        let track = Track::new(vec![bosh_sled], &vec![]);
 
         let entities = track.entity_positions_at(100);
         assert_eq!(1, entities.len(), "bosh broke!");
@@ -188,7 +188,7 @@ mod tests {
         let mut bosh_sled = Entity::default_boshsled();
         bosh_sled.mutate_points(|p| p.previous_location -= Vector2D(0.4, 0.0));
         let track = Track::new(
-            &vec![bosh_sled],
+            vec![bosh_sled],
             &vec![Line {
                 flipped: false,
                 line_type: LineType::Normal,

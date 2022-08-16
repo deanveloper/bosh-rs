@@ -2,7 +2,7 @@ use crate::game::line::{Line, LineType};
 use crate::game::vector::Vector2D;
 use crate::linestore::grid::Grid;
 use crate::physics;
-use crate::rider::{EntityPoint, Entity};
+use crate::rider::{Entity, EntityPoint};
 use physics::advance_frame::frame_after;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -21,7 +21,7 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn new(starting_positions: &[Entity], lines: &Vec<Line>) -> Track {
+    pub fn new(starting_positions: Vec<Entity>, lines: &Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
             if line.line_type == LineType::Scenery {
@@ -36,7 +36,7 @@ impl Track {
         Track {
             grid: Grid::new(lines),
             hitbox_extensions,
-            precomputed_rider_positions: RefCell::new(vec![starting_positions.to_vec()]),
+            precomputed_rider_positions: RefCell::new(vec![starting_positions]),
         }
     }
 
