@@ -1,6 +1,9 @@
+use anyhow::{Context, Error};
+use read_from::{LittleEndian, ReadFrom};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
+use std::io::Read;
 use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
@@ -180,3 +183,18 @@ impl Sum for Vector2D {
 }
 
 impl Eq for Vector2D {}
+
+impl ReadFrom for Vector2D {
+    type Error = Error;
+
+    fn read_from<R: Read>(mut input: R) -> Result<Self, Self::Error> {
+        Ok(Vector2D(
+            LittleEndian::read_from(&mut input)
+                .context("error in Vector2D while reading x")?
+                .0,
+            LittleEndian::read_from(&mut input)
+                .context("error in Vector2D while reading y")?
+                .0,
+        ))
+    }
+}

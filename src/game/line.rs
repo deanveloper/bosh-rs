@@ -12,7 +12,7 @@ pub enum LineType {
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Line {
     pub flipped: bool,
-    #[serde(alias = "lineType")]
+    #[serde(rename = "lineType")]
     pub line_type: LineType,
     pub ends: (Vector2D, Vector2D),
 }

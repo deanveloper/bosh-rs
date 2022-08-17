@@ -6,7 +6,6 @@ authors = ["deanveloper"]
 description = "A highly customizable physics engine for the game Line Rider"
 repository = "https://github.com/deanveloper/bosh-rs"
 license = "MIT"
-license-file = "LICENSE.md"
 keywords = [
     "line-rider",
     "line",
@@ -24,3 +23,5 @@ categories = [
 serde = { version = "1", features = ["derive"] }
 anyhow = "1"
 serde_repr = "0.1"
+read-from = "0.5"
+
