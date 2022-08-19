@@ -1,9 +1,9 @@
 use crate::Vector2D;
+use serde::{Deserialize, Serialize};
 
-#[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
-#[repr(usize)]
+#[derive(Serialize, Deserialize, Hash, Debug, PartialEq, Eq, Ord, PartialOrd, Copy, Clone)]
 pub enum PointIndex {
-    BoshLeftFoot = 0,
+    BoshLeftFoot,
     BoshRightFoot,
     BoshLeftHand,
     BoshRightHand,
@@ -22,7 +22,7 @@ impl PointIndex {
     }
 }
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Copy, Clone)]
 pub struct EntityPoint {
     pub previous_location: Vector2D,
     pub location: Vector2D,

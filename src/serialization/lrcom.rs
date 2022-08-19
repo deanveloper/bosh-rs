@@ -60,15 +60,15 @@ pub enum LRComLineType {
     Scenery = 2,
 }
 
-impl<V: Borrow<LRComVec2>> From<V> for Vector2D {
-    fn from(vector: V) -> Vector2D {
+impl From<LRComVec2> for Vector2D {
+    fn from(vector: LRComVec2) -> Vector2D {
         let vector = vector.borrow();
         Vector2D(vector.x, vector.y)
     }
 }
 
-impl<V: Borrow<Vector2D>> From<V> for LRComVec2 {
-    fn from(vector: V) -> LRComVec2 {
+impl From<Vector2D> for LRComVec2 {
+    fn from(vector: Vector2D) -> LRComVec2 {
         let vector = vector.borrow();
         LRComVec2 {
             x: vector.0,
@@ -77,8 +77,8 @@ impl<V: Borrow<Vector2D>> From<V> for LRComVec2 {
     }
 }
 
-impl<LT: Borrow<LineType>> From<LT> for LRComLineType {
-    fn from(line_type: LT) -> LRComLineType {
+impl From<LineType> for LRComLineType {
+    fn from(line_type: LineType) -> LRComLineType {
         match line_type.borrow() {
             LineType::Normal => LRComLineType::Normal,
             LineType::Accelerate { .. } => LRComLineType::Accelerate,
@@ -87,8 +87,8 @@ impl<LT: Borrow<LineType>> From<LT> for LRComLineType {
     }
 }
 
-impl<LT: Borrow<LRComLineType>> From<LT> for LineType {
-    fn from(line_type: LT) -> LineType {
+impl From<LRComLineType> for LineType {
+    fn from(line_type: LRComLineType) -> LineType {
         match line_type.borrow() {
             LRComLineType::Normal => LineType::Normal,
             LRComLineType::Accelerate => LineType::Accelerate { amount: 1 },
@@ -97,9 +97,8 @@ impl<LT: Borrow<LRComLineType>> From<LT> for LineType {
     }
 }
 
-impl<L: Borrow<Line>> From<L> for LRComLine {
-    fn from(line: L) -> LRComLine {
-        let line = line.borrow();
+impl From<Line> for LRComLine {
+    fn from(line: Line) -> LRComLine {
         LRComLine {
             id: NEXT_LINE_ID.fetch_add(1, Ordering::Relaxed),
             r#type: line.borrow().line_type.into(),
@@ -116,7 +115,7 @@ impl From<&LRComLine> for Line {
     fn from(line: &LRComLine) -> Line {
         Line {
             flipped: line.flipped,
-            line_type: (&line.r#type).into(),
+            line_type: line.r#type.into(),
             ends: (Vector2D(line.x1, line.y1), Vector2D(line.x2, line.y2)),
         }
     }
@@ -142,10 +141,8 @@ impl From<Entity> for Result<LRComEntity> {
     }
 }
 
-impl<E: Borrow<LRComEntity>> From<E> for Entity {
-    fn from(entity: E) -> Entity {
-        let entity = entity.borrow();
-
+impl From<&LRComEntity> for Entity {
+    fn from(entity: &LRComEntity) -> Entity {
         let mut bosh_sled = Entity::default_boshsled();
         bosh_sled.mutate_points(|p| p.location += entity.start_position.into());
         bosh_sled.mutate_points(|p| p.previous_location -= entity.start_velocity.into());
@@ -165,10 +162,15 @@ impl From<&Track> for Result<LRComTrack> {
         let serdey_entities: Vec<LRComEntity> = track
             .entity_positions_at(0)
             .iter()
-            .map(|entity| entity.into())
+            .map(Into::into)
             .collect::<Result<Vec<LRComEntity>>>()?;
 
-        let serdey_lines: Vec<LRComLine> = track.all_lines().iter().map(|l| l.into()).collect();
+        let serdey_lines: Vec<LRComLine> = track
+            .all_lines()
+            .iter()
+            .copied()
+            .map(|l| l.into())
+            .collect();
 
         Ok(LRComTrack {
             label: "A Bosh Track".to_string(),

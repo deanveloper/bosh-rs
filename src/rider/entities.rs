@@ -4,8 +4,9 @@ use crate::game::Vector2D;
 use crate::rider::bone::{Bone, BoneType};
 use crate::rider::point::{EntityPoint, PointIndex};
 use crate::rider::Joint;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Entity {
     pub points: HashMap<PointIndex, EntityPoint>,
 
@@ -315,7 +316,7 @@ mod sled {
 
 fn make_entity_point(loc: Vector2D, friction: f64) -> EntityPoint {
     EntityPoint {
-        previous_location: loc,
+        previous_location: loc - Vector2D(0.4, 0.0),
         location: loc,
         friction,
     }
