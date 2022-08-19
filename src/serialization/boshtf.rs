@@ -1,6 +1,5 @@
 //! Module for deserializing BoshTF, the Bosh Track Format
 
-use std::borrow::Borrow;
 use std::collections::HashMap;
 
 use crate::rider::{Entity, PointIndex};
@@ -32,7 +31,7 @@ pub struct BoshTFEntity {
 impl<E: From<Error>> From<&BoshTFTrack> for Result<Track, E> {
     fn from(track: &BoshTFTrack) -> Result<Track, E> {
         Ok(Track::new(
-            track
+            &track
                 .entites
                 .iter()
                 .map(|se| se.into())
