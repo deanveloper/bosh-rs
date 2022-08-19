@@ -24,6 +24,7 @@ impl PointIndex {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Copy, Clone)]
 pub struct EntityPoint {
+    #[serde(rename = "previousLocation")]
     pub previous_location: Vector2D,
     pub location: Vector2D,
     pub friction: f64,

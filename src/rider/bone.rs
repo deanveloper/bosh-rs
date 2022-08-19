@@ -1,5 +1,6 @@
-use crate::rider::PointIndex;
 use serde::{Deserialize, Serialize};
+
+use crate::rider::PointIndex;
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 pub struct Bone {
@@ -22,8 +23,13 @@ impl Bone {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 pub enum BoneType {
     Normal,
-    Mount { endurance: f64 },
-    Repel { length_factor: f64 },
+    Mount {
+        endurance: f64,
+    },
+    Repel {
+        #[serde(rename = "lengthFactor")]
+        length_factor: f64,
+    },
 }
 
 /// A joint breaks if its cross product is negative. Joints don't actually affect the position

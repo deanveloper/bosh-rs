@@ -5,12 +5,13 @@ pub mod line_physics;
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
+    use crate::game::Line;
     use crate::game::Track;
     use crate::game::Vector2D;
-    use crate::game::{Line, LineType};
     use crate::physics::line_physics::apply_gravity_wells;
     use crate::rider::{Bone, BoneType, Entity, EntityPoint, PointIndex};
-    use std::collections::HashMap;
 
     fn _avg_position(entity: &Entity) -> Vector2D {
         let bosh_sum: Vector2D = entity.points.values().map(|p| p.location).sum();
@@ -143,11 +144,7 @@ mod tests {
             location: Vector2D(10.23, 30.2345345),
             friction: 0.0,
         };
-        let line = Line {
-            flipped: false,
-            line_type: LineType::Normal,
-            ends: (Vector2D(0.0, 25.0), Vector2D(100.0, 25.0)),
-        };
+        let line = Line::builder().point(0.0, 25.0).point(100.0, 25.0).build();
 
         apply_gravity_wells(&mut point, &Track::new(&vec![], &vec![line]));
 
@@ -184,16 +181,13 @@ mod tests {
 
     #[test]
     fn rider_physics_bosh_with_line() {
-        let mut bosh_sled = Entity::default_boshsled();
-        bosh_sled.mutate_points(|p| p.previous_location -= Vector2D(0.4, 0.0));
+        let bosh_sled = Entity::default_boshsled();
         let track = Track::new(
             &vec![bosh_sled],
-            &vec![Line {
-                flipped: false,
-                line_type: LineType::Normal,
-                ends: (Vector2D(0.0, 5.0), Vector2D(30.0, 20.0)),
-            }],
+            &vec![Line::builder().point(0.0, 5.0).point(30.0, 20.0).build()],
         );
+
+        eprintln!("{:?}", track);
 
         let entities = track.entity_positions_at(100);
         assert_eq!(1, entities.len(), "bosh broke!");

@@ -44,12 +44,17 @@ pub struct LRComVec2 {
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub struct LRComLine {
     id: u64,
-    r#type: LRComLineType,
+    #[serde(rename = "type")]
+    line_type: LRComLineType,
     x1: f64,
     y1: f64,
     x2: f64,
     y2: f64,
     flipped: bool,
+    #[serde(rename = "leftExtended")]
+    left_extended: bool,
+    #[serde(rename = "leftExtended")]
+    right_extended: bool,
 }
 
 #[derive(Copy, Clone, Serialize_repr, Deserialize_repr)]
@@ -101,23 +106,28 @@ impl From<Line> for LRComLine {
     fn from(line: Line) -> LRComLine {
         LRComLine {
             id: NEXT_LINE_ID.fetch_add(1, Ordering::Relaxed),
-            r#type: line.borrow().line_type.into(),
-            x1: line.ends.0 .0,
-            y1: line.ends.0 .1,
-            x2: line.ends.1 .0,
-            y2: line.ends.1 .1,
+            line_type: line.borrow().line_type.into(),
+            x1: line.ends.0.location.0,
+            y1: line.ends.0.location.1,
+            x2: line.ends.1.location.0,
+            y2: line.ends.1.location.1,
             flipped: line.flipped,
+            left_extended: line.ends.0.extended,
+            right_extended: line.ends.1.extended,
         }
     }
 }
 
 impl From<&LRComLine> for Line {
     fn from(line: &LRComLine) -> Line {
-        Line {
-            flipped: line.flipped,
-            line_type: line.r#type.into(),
-            ends: (Vector2D(line.x1, line.y1), Vector2D(line.x2, line.y2)),
-        }
+        Line::builder()
+            .point(line.x1, line.y1)
+            .extended(line.left_extended)
+            .point(line.x2, line.y2)
+            .extended(line.right_extended)
+            .flipped(line.flipped)
+            .line_type(line.line_type.into())
+            .build()
     }
 }
 

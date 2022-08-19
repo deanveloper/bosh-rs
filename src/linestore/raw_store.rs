@@ -17,8 +17,12 @@ impl RawStore {
         &self.lines
     }
 
-    pub fn line_at(&self, idx: StoreIndex) -> Option<Line> {
-        self.lines.get(idx.0).copied()
+    pub fn line_at_mut(&mut self, idx: StoreIndex) -> Option<&mut Line> {
+        self.lines.get_mut(idx.0)
+    }
+
+    pub fn line_at(&self, idx: StoreIndex) -> Option<&Line> {
+        self.lines.get(idx.0)
     }
 
     /// Returns the index of the added line
@@ -35,7 +39,7 @@ impl RawStore {
     ///
     /// If a swap_remove occurred such that the user of the
     /// RawStore should need to update its indices, it returns those indices.
-    pub fn remove_line(&mut self, line: Line) -> RemoveLineResult {
+    pub fn remove_line(&mut self, line: &Line) -> RemoveLineResult {
         let idxs = self.line_to_index.get_mut(&line);
         if idxs.is_none() {
             return RemoveLineResult::NoneRemoved;

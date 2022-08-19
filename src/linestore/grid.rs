@@ -1,7 +1,8 @@
+use std::collections::{HashMap, HashSet};
+
 use crate::game::Line;
 use crate::game::Vector2D;
 use crate::linestore::raw_store::{RawStore, RemoveLineResult, StoreIndex};
-use std::collections::{HashMap, HashSet};
 
 const CELL_SIZE: i64 = 20;
 
@@ -28,40 +29,22 @@ impl Grid {
         self.lines.all_lines()
     }
 
-    pub fn lines_near(&self, loc: Vector2D) -> Vec<Line> {
-        let mut nearby_line_indices: HashSet<StoreIndex> = Default::default();
-
-        let center = GridIndex::from_location(loc);
-
-        for dx in [-1, 0, 1] {
-            for dy in [-1, 0, 1] {
-                let mut grid_index = center;
-                grid_index.0 += dx;
-                grid_index.1 += dy;
-
-                if let Some(store_indices) = self.grid.get(&grid_index).cloned() {
-                    for store_index in store_indices {
-                        nearby_line_indices.insert(store_index);
-                    }
-                }
-            }
-        }
-
-        nearby_line_indices
-            .iter()
-            .map(|l| self.lines.line_at(*l).expect("no line at index"))
+    pub fn lines_near(&self, loc: Vector2D, grid_radius: u8) -> Vec<&Line> {
+        self.nearby_line_indices(loc, grid_radius)
+            .into_iter()
+            .map(|l| self.lines.line_at(l).expect("no line at index"))
             .collect()
     }
 
-    pub fn add_line(&mut self, line: Line) {
+    pub fn add_line(&mut self, mut line: Line) {
         let lines_idx = self.lines.add_line(line);
 
-        for index in GridIndex::iter_over_line(line) {
+        for index in GridIndex::iter_over_line(&line) {
             self.grid.entry(index).or_default().push(lines_idx);
         }
     }
 
-    pub fn remove_line(&mut self, line: Line) {
+    pub fn remove_line(&mut self, line: &Line) {
         // remove lines_idx from grid
         let result = self.lines.remove_line(line);
 
@@ -92,13 +75,49 @@ impl Grid {
         }
     }
 
-    fn remove_line_for_real(&mut self, line: Line, replaced_idx: StoreIndex) {
+    fn remove_line_for_real(&mut self, line: &Line, replaced_idx: StoreIndex) {
         for grid_idx in GridIndex::iter_over_line(line) {
             if let Some(idxs) = self.grid.get_mut(&grid_idx) {
                 if let Some(idx_pos) = idxs.iter().position(|idx| *idx == replaced_idx) {
                     idxs.swap_remove(idx_pos);
                 }
             }
+        }
+    }
+
+    fn nearby_line_indices(&self, loc: Vector2D, grid_radius: u8) -> HashSet<StoreIndex> {
+        let mut nearby_line_indices: HashSet<StoreIndex> = Default::default();
+
+        let center = GridIndex::from_location(loc);
+
+        let grid_radius = grid_radius as i64;
+
+        for dx in -grid_radius..=grid_radius {
+            for dy in -grid_radius..=grid_radius {
+                let mut grid_index = center;
+                grid_index.0 += dx;
+                grid_index.1 += dy;
+
+                if let Some(store_indices) = self.grid.get(&grid_index).cloned() {
+                    for store_index in store_indices {
+                        nearby_line_indices.insert(store_index);
+                    }
+                }
+            }
+        }
+
+        nearby_line_indices
+    }
+
+    fn map_lines_near<F>(&mut self, loc: Vector2D, grid_radius: u8, mut mapper: F)
+    where
+        F: FnMut(Line) -> Line,
+    {
+        let nearby_line_indices = self.nearby_line_indices(loc, grid_radius);
+
+        for line_idx in nearby_line_indices {
+            let line = self.lines.line_at_mut(line_idx).expect("no line at index");
+            *line = mapper(*line);
         }
     }
 }
@@ -114,15 +133,16 @@ impl GridIndex {
         )
     }
 
-    fn iter_over_line(line: Line) -> GridIndexLineIter {
+    fn iter_over_line(line: &Line) -> GridIndexLineIter {
         let points = line.ends;
 
-        let furthest_left = [points.0, points.1]
+        let furthest_left = [points.0.location, points.1.location]
             .into_iter()
-            .min_by(|l1, l2| l1.0.total_cmp(&l2.0))
+            .min_by(|p1, p2| p1.0.total_cmp(&p2.0))
             .expect("array of two elements has no minimum...?");
 
-        let slope = (points.1 .1 - points.0 .1) / (points.1 .0 - points.0 .0);
+        let slope = (points.1.location.1 - points.0.location.1)
+            / (points.1.location.0 - points.0.location.0);
         let max_distance = line.length_squared().sqrt();
 
         GridIndexLineIter {

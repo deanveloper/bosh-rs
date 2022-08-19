@@ -1,41 +1,27 @@
-use crate::game::line::{Line, LineType};
+use std::cell::RefCell;
+
+use physics::advance_frame::frame_after;
+
+use crate::game::line::Line;
 use crate::game::vector::Vector2D;
 use crate::linestore::grid::Grid;
 use crate::physics;
 use crate::rider::{Entity, EntityPoint};
-use physics::advance_frame::frame_after;
-use std::cell::RefCell;
-use std::collections::HashMap;
 
-const GRAVITY_WELL_HEIGHT: f64 = 10.0;
-const EXTENSION_RATIO: f64 = 0.25;
+pub const GRAVITY_WELL_HEIGHT: f64 = 10.0;
 
 /// A track in linerider.
 #[derive(Debug)]
 pub struct Track {
     grid: Grid,
 
-    hitbox_extensions: HashMap<Line, (f64, f64)>,
-
     precomputed_rider_positions: RefCell<Vec<Vec<Entity>>>,
 }
 
 impl Track {
     pub fn new(starting_positions: &Vec<Entity>, lines: &Vec<Line>) -> Track {
-        let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
-        for line in lines.iter() {
-            if line.line_type == LineType::Scenery {
-                continue;
-            }
-            hitbox_extensions.insert(
-                *line,
-                Track::calculate_hitbox_extensions_for_line(line, lines),
-            );
-        }
-
         Track {
             grid: Grid::new(lines),
-            hitbox_extensions,
             precomputed_rider_positions: RefCell::new(vec![starting_positions.clone()]),
         }
     }
@@ -52,14 +38,14 @@ impl Track {
     }
 
     /// Removes a single line from the track.
-    pub fn remove_line(&mut self, line: Line) {
+    pub fn remove_line(&mut self, line: &Line) {
         self.grid.remove_line(line);
         self.precomputed_rider_positions.borrow_mut().drain(1..);
     }
 
     /// Gets all of the lines near a point.
-    pub fn lines_near(&self, point: Vector2D) -> Vec<Line> {
-        self.grid.lines_near(point)
+    pub fn lines_near(&self, point: Vector2D) -> Vec<&Line> {
+        self.grid.lines_near(point, 1)
     }
 
     /// Gets the rider positions for a zero-indexed frame.
@@ -104,7 +90,7 @@ impl Track {
 
         self.lines_near(to_snap)
             .iter()
-            .flat_map(|l| [l.ends.0, l.ends.1])
+            .flat_map(|l| [l.ends.0.location, l.ends.1.location])
             .map(|p| (p, p.distance_squared(to_snap)))
             .filter(|(_, dist)| dist.total_cmp(&max_dist_sq).is_lt())
             .min_by(|(_, d1), (_, d2)| d1.total_cmp(d2))
@@ -121,7 +107,7 @@ impl Track {
     ///  * the point is outside of the line, including extensions
     pub fn distance_below_line(&self, line: &Line, point: &EntityPoint) -> f64 {
         let line_vec = line.as_vector2d();
-        let point_from_start = point.location - line.ends.0;
+        let point_from_start = point.location - line.ends.0.location;
         let perpendicular = line.perpendicular();
 
         let is_moving_into_line = {
@@ -135,10 +121,9 @@ impl Track {
         let line_length = line_vec.length_squared().sqrt();
         let line_normalized = line_vec / line_length;
 
-        let (ext_l, ext_r) = self.hitbox_extensions.get(line).unwrap_or(&(0.0, 0.0));
-        let (ext_l, ext_r) = (*ext_l, *ext_r);
+        let (ext_l, ext_r) = line.hitbox_extensions();
         let parallel_component = point_from_start.dot_product(line_normalized);
-        if !(ext_l..=(ext_r + line_length)).contains(&parallel_component) {
+        if parallel_component < ext_l || ext_r + line_length < parallel_component {
             return 0.0;
         }
 
@@ -149,42 +134,12 @@ impl Track {
             0.0
         }
     }
-
-    /// Returns the amount that each side's hitbox should be extended by.
-    fn calculate_hitbox_extensions_for_line(line: &Line, lines: &Vec<Line>) -> (f64, f64) {
-        // number of units to extend by
-        let mut p0_extension = 0.0;
-        let mut p1_extension = 0.0;
-        let length = line.length_squared().sqrt();
-
-        for other in lines {
-            if other.line_type == LineType::Scenery {
-                continue;
-            }
-            if line.ends.0 == other.ends.0 && line.ends.1 == other.ends.1 {
-                continue;
-            }
-
-            // if the left side is connected...
-            if line.ends.0 == other.ends.0 || line.ends.0 == other.ends.1 {
-                p0_extension = f64::min(EXTENSION_RATIO, GRAVITY_WELL_HEIGHT / length);
-            }
-
-            // if the right side is connected...
-            if line.ends.1 == other.ends.0 || line.ends.1 == other.ends.1 {
-                p1_extension = f64::min(EXTENSION_RATIO, GRAVITY_WELL_HEIGHT / length);
-            }
-        }
-
-        (p0_extension, p1_extension)
-    }
 }
 
 impl Clone for Track {
     fn clone(&self) -> Self {
         Track {
             grid: self.grid.clone(),
-            hitbox_extensions: self.hitbox_extensions.clone(),
             precomputed_rider_positions: self.precomputed_rider_positions.clone(),
         }
     }
