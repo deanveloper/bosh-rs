@@ -21,7 +21,7 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn new(starting_positions: Vec<Entity>, lines: &Vec<Line>) -> Track {
+    pub fn new(starting_positions: &Vec<Entity>, lines: &Vec<Line>) -> Track {
         let mut hitbox_extensions: HashMap<Line, (f64, f64)> = HashMap::new();
         for line in lines.iter() {
             if line.line_type == LineType::Scenery {
@@ -36,7 +36,7 @@ impl Track {
         Track {
             grid: Grid::new(lines),
             hitbox_extensions,
-            precomputed_rider_positions: RefCell::new(vec![starting_positions]),
+            precomputed_rider_positions: RefCell::new(vec![starting_positions.clone()]),
         }
     }
 
