@@ -36,7 +36,7 @@ impl RawStore {
     /// If a swap_remove occurred such that the user of the
     /// RawStore should need to update its indices, it returns those indices.
     pub fn remove_line(&mut self, line: &Line) -> RemoveLineResult {
-        let idxs = self.line_to_index.get_mut(&line);
+        let idxs = self.line_to_index.get_mut(line);
         if idxs.is_none() {
             return RemoveLineResult::NoneRemoved;
         }
@@ -45,7 +45,7 @@ impl RawStore {
         // remove the line
         let idx = idxs.swap_remove(0);
         if idxs.is_empty() {
-            self.line_to_index.remove_entry(&line);
+            self.line_to_index.remove_entry(line);
         }
 
         self.lines.swap_remove(idx);

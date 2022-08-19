@@ -16,10 +16,10 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn new(lines: &Vec<Line>) -> Grid {
+    pub fn new(lines: Vec<Line>) -> Grid {
         let mut grid: Grid = Default::default();
         for line in lines {
-            grid.add_line(*line);
+            grid.add_line(line);
         }
 
         grid

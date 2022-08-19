@@ -19,10 +19,10 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn new(starting_positions: &Vec<Entity>, lines: &Vec<Line>) -> Track {
+    pub fn new(starting_positions: Vec<Entity>, lines: Vec<Line>) -> Track {
         Track {
             grid: Grid::new(lines),
-            precomputed_rider_positions: RefCell::new(vec![starting_positions.clone()]),
+            precomputed_rider_positions: RefCell::new(vec![starting_positions]),
         }
     }
 

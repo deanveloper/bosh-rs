@@ -13,7 +13,7 @@ mod tests {
     fn infinite_slope_line() {
         let line = &Line::builder().point(0.0, 0.0).point(0.0, 100.0).build();
 
-        let grid = Grid::new(&vec![*line]);
+        let grid = Grid::new(vec![*line]);
 
         let nearby = grid.lines_near(Vector2D(0.0, 0.0), 1);
         assert_eq!(nearby, vec![line]);
@@ -38,7 +38,7 @@ mod tests {
     fn zero_slope_line() {
         let line = &Line::builder().point(0.0, 0.0).point(100.0, 0.0).build();
 
-        let grid = Grid::new(&vec![*line]);
+        let grid = Grid::new(vec![*line]);
 
         let nearby = grid.lines_near(Vector2D(0.0, 0.0), 1);
         assert_eq!(nearby, vec![line]);
@@ -66,7 +66,7 @@ mod tests {
             .point(435.47457, 348.3489237)
             .build();
 
-        let grid = Grid::new(&vec![*line]);
+        let grid = Grid::new(vec![*line]);
 
         let nearby = grid.lines_near(Vector2D(0.0, 0.0), 1);
         assert_eq!(nearby, Vec::<&Line>::new());
@@ -85,7 +85,7 @@ mod tests {
             .point(435.47457, 98.348952734)
             .build();
 
-        let grid = Grid::new(&vec![*line]);
+        let grid = Grid::new(vec![*line]);
 
         let nearby = grid.lines_near(Vector2D(0.0, 0.0), 1);
         assert_eq!(nearby, Vec::<&Line>::new());
@@ -104,7 +104,7 @@ mod tests {
             .point(-10.0, 50.0)
             .build();
 
-        let grid = Grid::new(&vec![*line]);
+        let grid = Grid::new(vec![*line]);
 
         let nearby = grid.lines_near(Vector2D(0.0, 0.0), 1);
         assert_eq!(nearby, Vec::<&Line>::new());
@@ -123,7 +123,7 @@ mod tests {
             .point(150.0, 50.0)
             .build();
 
-        let grid = Grid::new(&vec![*line]);
+        let grid = Grid::new(vec![*line]);
 
         let nearby = grid.lines_near(Vector2D(0.0, 0.0), 1);
         assert_eq!(nearby, Vec::<&Line>::new());
@@ -139,7 +139,7 @@ mod tests {
             .point(50.0, -250.0)
             .build();
 
-        let grid = Grid::new(&vec![*line]);
+        let grid = Grid::new(vec![*line]);
 
         let nearby = grid.lines_near(Vector2D(0.0, 0.0), 1);
         assert_eq!(nearby, Vec::<&Line>::new());
@@ -157,7 +157,7 @@ mod tests {
             .point(0.0, 1000.0)
             .point(100.0, 1000.0)
             .build();
-        let grid = Grid::new(&vec![line1, line2, line3, far_line]);
+        let grid = Grid::new(vec![line1, line2, line3, far_line]);
 
         let lines = grid.lines_near(Vector2D(50.0, 0.0), 1);
         assert_eq!(
@@ -176,7 +176,7 @@ mod tests {
             .point(100.0, 1000.0)
             .build();
 
-        let mut grid = Grid::new(&vec![line1, line2, line3, far_line]);
+        let mut grid = Grid::new(vec![line1, line2, line3, far_line]);
 
         grid.remove_line(&line2);
 
@@ -195,7 +195,7 @@ mod tests {
             .point(100.0, 1000.0)
             .build();
 
-        let mut grid = Grid::new(&vec![line1, line2, line3, far_line]);
+        let mut grid = Grid::new(vec![line1, line2, line3, far_line]);
 
         grid.remove_line(&far_line);
 
@@ -217,7 +217,7 @@ mod tests {
             .point(100.0, 1000.0)
             .build();
 
-        let grid = Grid::new(&vec![line1, line2, line3, line4, far_line]);
+        let grid = Grid::new(vec![line1, line2, line3, line4, far_line]);
 
         let lines = grid.all_lines();
         assert_eq!(lines, &vec![line1, line2, line3, line4, far_line]);

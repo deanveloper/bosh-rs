@@ -22,8 +22,8 @@ pub struct BoshTFTrack {
 impl From<&BoshTFTrack> for Track {
     fn from(track: &BoshTFTrack) -> Track {
         Track::new(
-            &track.entites.iter().map(Into::into).collect(),
-            &track.lines,
+            track.entites.iter().map(Entity::from).collect(),
+            track.lines.clone(),
         )
     }
 }

@@ -146,7 +146,7 @@ mod tests {
         };
         let line = Line::builder().point(0.0, 25.0).point(100.0, 25.0).build();
 
-        apply_gravity_wells(&mut point, &Track::new(&vec![], &vec![line]));
+        apply_gravity_wells(&mut point, &Track::new(vec![], vec![line]));
 
         assert_eq!(point.location, Vector2D(10.23, 25.0))
     }
@@ -168,7 +168,7 @@ mod tests {
     fn rider_physics_bosh_falling() {
         let bosh_sled = Entity::default_boshsled();
 
-        let track = Track::new(&vec![bosh_sled], &vec![]);
+        let track = Track::new(vec![bosh_sled], vec![]);
 
         let entities = track.entity_positions_at(100);
         assert_eq!(1, entities.len(), "bosh broke!");
@@ -183,8 +183,8 @@ mod tests {
     fn rider_physics_bosh_with_line() {
         let bosh_sled = Entity::default_boshsled();
         let track = Track::new(
-            &vec![bosh_sled],
-            &vec![Line::builder().point(0.0, 5.0).point(30.0, 20.0).build()],
+            vec![bosh_sled],
+            vec![Line::builder().point(0.0, 5.0).point(30.0, 20.0).build()],
         );
 
         eprintln!("{:?}", track);
