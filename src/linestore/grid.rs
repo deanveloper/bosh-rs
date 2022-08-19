@@ -36,7 +36,7 @@ impl Grid {
             .collect()
     }
 
-    pub fn add_line(&mut self, mut line: Line) {
+    pub fn add_line(&mut self, line: Line) {
         let lines_idx = self.lines.add_line(line);
 
         for index in GridIndex::iter_over_line(&line) {
@@ -107,18 +107,6 @@ impl Grid {
         }
 
         nearby_line_indices
-    }
-
-    fn map_lines_near<F>(&mut self, loc: Vector2D, grid_radius: u8, mut mapper: F)
-    where
-        F: FnMut(Line) -> Line,
-    {
-        let nearby_line_indices = self.nearby_line_indices(loc, grid_radius);
-
-        for line_idx in nearby_line_indices {
-            let line = self.lines.line_at_mut(line_idx).expect("no line at index");
-            *line = mapper(*line);
-        }
     }
 }
 

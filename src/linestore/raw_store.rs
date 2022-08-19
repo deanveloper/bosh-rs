@@ -17,10 +17,6 @@ impl RawStore {
         &self.lines
     }
 
-    pub fn line_at_mut(&mut self, idx: StoreIndex) -> Option<&mut Line> {
-        self.lines.get_mut(idx.0)
-    }
-
     pub fn line_at(&self, idx: StoreIndex) -> Option<&Line> {
         self.lines.get(idx.0)
     }
