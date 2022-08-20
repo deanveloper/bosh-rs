@@ -10,9 +10,16 @@ use crate::rider::{Entity, EntityPoint};
 
 pub const GRAVITY_WELL_HEIGHT: f64 = 10.0;
 
+#[derive(Clone, Debug)]
+pub struct TrackMeta {
+
+}
+
 /// A track in linerider.
 #[derive(Debug)]
 pub struct Track {
+    meta: TrackMeta,
+
     grid: Grid,
 
     precomputed_rider_positions: RefCell<Vec<Vec<Entity>>>,
@@ -21,6 +28,7 @@ pub struct Track {
 impl Track {
     pub fn new(starting_positions: Vec<Entity>, lines: Vec<Line>) -> Track {
         Track {
+            meta: TrackMeta{},
             grid: Grid::new(lines),
             precomputed_rider_positions: RefCell::new(vec![starting_positions]),
         }
@@ -139,6 +147,7 @@ impl Track {
 impl Clone for Track {
     fn clone(&self) -> Self {
         Track {
+            meta: self.meta.clone(),
             grid: self.grid.clone(),
             precomputed_rider_positions: self.precomputed_rider_positions.clone(),
         }
