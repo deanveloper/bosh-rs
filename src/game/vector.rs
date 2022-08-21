@@ -1,11 +1,12 @@
-use anyhow::{Context, Error};
-use read_from::{LittleEndian, ReadFrom};
-use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::io::Read;
 use std::iter::Sum;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+
+use anyhow::{Context, Error};
+use read_from::{LittleEndian, ReadFrom};
+use serde::{Deserialize, Serialize};
 
 /// Represents a 2-dimensional vector of floats. Typically used to represent a point
 /// on a track.
@@ -52,6 +53,11 @@ impl Vector2D {
     /// Rotates the vector 90 degrees to the right (clockwise)
     pub fn rotate90_right(self) -> Vector2D {
         Vector2D(-self.1, self.0)
+    }
+
+    /// mirrors the vector over the y=x line.
+    pub fn mirror_over_yx(self) -> Vector2D {
+        Vector2D(self.1, self.0)
     }
 
     /// Rotates the vector by some arbitrary number of radians

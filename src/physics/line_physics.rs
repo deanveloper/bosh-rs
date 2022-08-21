@@ -21,13 +21,9 @@ pub fn apply_gravity_wells(point: &mut EntityPoint, track: &Track) {
         if point.previous_location.0 >= next_location.0 {
             friction_adjustment.0 = -friction_adjustment.0
         }
-        if point.previous_location.1 >= next_location.1 {
+        if point.previous_location.1 < next_location.1 {
             friction_adjustment.1 = -friction_adjustment.1
         }
-
-        // adjust the previous location to account for acceleration and
-        let next_previous_location = point.previous_location + friction_adjustment;
-
         if let LineType::Accelerate { amount: accel } = line.line_type {
             let direction = if line.flipped { -1.0 } else { 1.0 };
 
@@ -35,7 +31,7 @@ pub fn apply_gravity_wells(point: &mut EntityPoint, track: &Track) {
                 line.as_vector2d().normalize() * (accel as f64 * 0.1 * direction);
         }
 
-        point.previous_location = next_previous_location;
+        point.previous_location += friction_adjustment;
         point.location = next_location;
     }
 }

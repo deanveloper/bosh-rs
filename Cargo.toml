@@ -22,6 +22,5 @@ categories = [
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 anyhow = "1"
-serde_repr = "0.1"
 read-from = "0.5"
 

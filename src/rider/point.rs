@@ -27,5 +27,6 @@ pub struct EntityPoint {
     #[serde(rename = "previousLocation")]
     pub previous_location: Vector2D,
     pub location: Vector2D,
+    pub momentum: Vector2D,
     pub friction: f64,
 }

@@ -181,7 +181,6 @@ mod tests {
         grid.remove_line(&line2);
 
         let lines = grid.lines_near(Vector2D(50.0, 0.0), 1);
-        eprintln!("{:#?}", grid);
         assert_eq!(HashSet::from_iter(lines), HashSet::from([&line1, &line3]));
     }
 

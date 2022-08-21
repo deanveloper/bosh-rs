@@ -1,10 +1,8 @@
-use std::hash::Hash;
+use std::hash::{Hash, Hasher};
 
 use serde::{Deserialize, Serialize};
 
 use crate::game::vector::Vector2D;
-
-const ANTIGRAVITY_WELL_RATIO: f64 = 0.25;
 
 #[derive(Copy, Clone, Hash, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum LineType {
@@ -26,15 +24,46 @@ pub struct LinePoint {
     pub extended: bool,
 }
 
-#[derive(Copy, Clone, Hash, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct Line {
     pub ends: (LinePoint, LinePoint),
     #[serde(rename = "lineType")]
     pub line_type: LineType,
     pub flipped: bool,
+
+    #[serde(skip)] // defined in metadata, constant for all lines
+    extension_ratio: f64,
 }
 
-#[derive(Default)]
+impl Default for Line {
+    fn default() -> Self {
+        Line {
+            ends: (Default::default(), Default::default()),
+            line_type: Default::default(),
+            flipped: false,
+            extension_ratio: 0.25,
+        }
+    }
+}
+
+impl PartialEq for Line {
+    fn eq(&self, other: &Self) -> bool {
+        self.ends == other.ends
+            && self.line_type == other.line_type
+            && self.flipped == other.flipped
+    }
+}
+
+impl Hash for Line {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.ends.hash(state);
+        self.line_type.hash(state);
+        self.flipped.hash(state);
+    }
+}
+
+impl Eq for Line {}
+
 pub struct LineBuilder {
     first_location_init: bool,
     second_location_init: bool,
@@ -42,6 +71,10 @@ pub struct LineBuilder {
 }
 
 impl LineBuilder {
+    pub fn extension_ratio(mut self, extension_ratio: f64) -> LineBuilder {
+        self.line.extension_ratio = extension_ratio;
+        self
+    }
     pub fn line_type(mut self, line_type: LineType) -> LineBuilder {
         self.line.line_type = line_type;
         self
@@ -64,8 +97,10 @@ impl LineBuilder {
     pub fn point_vec(mut self, point: Vector2D) -> LineBuilder {
         if !self.first_location_init {
             self.line.ends.0.location = point;
+            self.first_location_init = true;
         } else {
             self.line.ends.1.location = point;
+            self.second_location_init = true;
         }
 
         self
@@ -88,7 +123,11 @@ impl LineBuilder {
 
 impl Line {
     pub fn builder() -> LineBuilder {
-        Default::default()
+        LineBuilder {
+            first_location_init: false,
+            second_location_init: false,
+            line: Default::default(),
+        }
     }
 
     pub fn as_vector2d(&self) -> Vector2D {
@@ -110,7 +149,7 @@ impl Line {
     }
 
     pub fn hitbox_extensions(&self) -> (f64, f64) {
-        let clamped_len = (self.length_squared().sqrt() * ANTIGRAVITY_WELL_RATIO).clamp(0.0, 10.0);
+        let clamped_len = (self.length_squared().sqrt() * self.extension_ratio).clamp(0.0, 10.0);
         let mut extensions = (0.0, 0.0);
 
         if self.ends.0.extended {

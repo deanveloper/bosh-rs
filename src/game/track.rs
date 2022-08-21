@@ -5,20 +5,31 @@ use physics::advance_frame::frame_after;
 use crate::game::line::Line;
 use crate::game::vector::Vector2D;
 use crate::linestore::grid::Grid;
-use crate::physics;
 use crate::rider::{Entity, EntityPoint};
+use crate::{physics, LineBuilder};
+use serde::{Deserialize, Serialize};
 
-pub const GRAVITY_WELL_HEIGHT: f64 = 10.0;
-
-#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TrackMeta {
+    line_extension_ratio: f64,
+    gravity_well_height: f64,
+    remount: bool,
+}
 
+impl Default for TrackMeta {
+    fn default() -> Self {
+        TrackMeta {
+            line_extension_ratio: 0.25,
+            gravity_well_height: 10.0,
+            remount: false,
+        }
+    }
 }
 
 /// A track in linerider.
 #[derive(Debug)]
 pub struct Track {
-    meta: TrackMeta,
+    pub meta: TrackMeta,
 
     grid: Grid,
 
@@ -28,10 +39,25 @@ pub struct Track {
 impl Track {
     pub fn new(starting_positions: Vec<Entity>, lines: Vec<Line>) -> Track {
         Track {
-            meta: TrackMeta{},
+            meta: Default::default(),
             grid: Grid::new(lines),
             precomputed_rider_positions: RefCell::new(vec![starting_positions]),
         }
+    }
+    pub fn new_with_meta(
+        starting_positions: Vec<Entity>,
+        lines: Vec<Line>,
+        meta: TrackMeta,
+    ) -> Track {
+        Track {
+            meta,
+            grid: Grid::new(lines),
+            precomputed_rider_positions: RefCell::new(vec![starting_positions]),
+        }
+    }
+
+    pub fn line_builder(&self) -> LineBuilder {
+        Line::builder().extension_ratio(self.meta.line_extension_ratio)
     }
 
     /// Gets all lines in the track.
@@ -119,7 +145,7 @@ impl Track {
         let perpendicular = line.perpendicular();
 
         let is_moving_into_line = {
-            let dot = perpendicular.dot_product(point.location - point.previous_location);
+            let dot = perpendicular.dot_product(point.momentum);
             dot < 0.0
         };
         if !is_moving_into_line {
@@ -131,12 +157,12 @@ impl Track {
 
         let (ext_l, ext_r) = line.hitbox_extensions();
         let parallel_component = point_from_start.dot_product(line_normalized);
-        if parallel_component < ext_l || ext_r + line_length < parallel_component {
+        if parallel_component < -ext_l || ext_r + line_length < parallel_component {
             return 0.0;
         }
 
         let distance_below = (-perpendicular).dot_product(point_from_start);
-        if 0.0 < distance_below && distance_below < GRAVITY_WELL_HEIGHT {
+        if 0.0 < distance_below && distance_below < self.meta.gravity_well_height {
             distance_below
         } else {
             0.0

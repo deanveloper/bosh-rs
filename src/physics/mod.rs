@@ -36,6 +36,7 @@ mod tests {
                     EntityPoint {
                         previous_location: Default::default(),
                         location: Vector2D(10.0, 0.0),
+                        momentum: Default::default(),
                         friction: 0.0,
                     },
                 ),
@@ -44,6 +45,7 @@ mod tests {
                     EntityPoint {
                         previous_location: Default::default(),
                         location: Vector2D(20.0, 0.0),
+                        momentum: Default::default(),
                         friction: 0.0,
                     },
                 ),
@@ -67,6 +69,7 @@ mod tests {
                     EntityPoint {
                         previous_location: Default::default(),
                         location: Vector2D(12.5, 0.0),
+                        momentum: Default::default(),
                         friction: 0.0,
                     },
                 ),
@@ -75,6 +78,7 @@ mod tests {
                     EntityPoint {
                         previous_location: Default::default(),
                         location: Vector2D(17.5, 0.0),
+                        momentum: Default::default(),
                         friction: 0.0,
                     },
                 )
@@ -91,6 +95,7 @@ mod tests {
                     EntityPoint {
                         previous_location: Default::default(),
                         location: Vector2D(10.0, 0.0),
+                        momentum: Default::default(),
                         friction: 0.0,
                     },
                 ),
@@ -99,6 +104,7 @@ mod tests {
                     EntityPoint {
                         previous_location: Default::default(),
                         location: Vector2D(13.0, 0.0),
+                        momentum: Default::default(),
                         friction: 0.0,
                     },
                 ),
@@ -122,6 +128,7 @@ mod tests {
                     EntityPoint {
                         previous_location: Default::default(),
                         location: Vector2D(9.0, 0.0),
+                        momentum: Default::default(),
                         friction: 0.0,
                     },
                 ),
@@ -130,6 +137,7 @@ mod tests {
                     EntityPoint {
                         previous_location: Default::default(),
                         location: Vector2D(14.0, 0.0),
+                        momentum: Default::default(),
                         friction: 0.0,
                     },
                 )
@@ -142,6 +150,7 @@ mod tests {
         let mut point = EntityPoint {
             previous_location: Vector2D(10.23, 30.0),
             location: Vector2D(10.23, 30.2345345),
+            momentum: Vector2D(0.0, 0.2),
             friction: 0.0,
         };
         let line = Line::builder().point(0.0, 25.0).point(100.0, 25.0).build();
@@ -187,13 +196,37 @@ mod tests {
             vec![Line::builder().point(0.0, 5.0).point(30.0, 20.0).build()],
         );
 
-        eprintln!("{:?}", track);
-
         let entities = track.entity_positions_at(100);
         assert_eq!(1, entities.len(), "bosh broke!");
 
         let x_velocity = avg_velocity(entities.first().unwrap()).0;
 
         assert!(x_velocity > 1.0, "should have significant x velocity");
+    }
+
+    #[test]
+    fn rider_slingshot() {
+        let entity = Entity::default_boshsled();
+        let track = Track::new(
+            vec![entity],
+            vec![Line::builder()
+                .point(1.2112666897140032, -3.0419052379903606)
+                .point(2.7302375219426875, -2.021219126142812)
+                .build()],
+        );
+
+        let entities = track.entity_positions_at(3);
+        let entity = entities.get(0).unwrap();
+
+        // comparison is to linerider.com's physics
+        assert_eq!(
+            entity.point_at(PointIndex::SledTail),
+            &EntityPoint {
+                previous_location: Vector2D(0.7215415143600306, 2.839539941622091,),
+                location: Vector2D(1.5156419932602299, -0.004549897633636998,),
+                momentum: Vector2D(0.32154151436003053, -2.160460058377909,),
+                friction: 0.0,
+            }
+        );
     }
 }

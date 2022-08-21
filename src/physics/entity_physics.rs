@@ -42,6 +42,7 @@ impl PhysicsEntity {
             *p = EntityPoint {
                 previous_location: p.location,
                 location: p.location + new_velocity,
+                momentum: new_velocity,
                 friction: p.friction,
             };
         })

@@ -317,6 +317,7 @@ mod sled {
 fn make_entity_point(loc: Vector2D, friction: f64) -> EntityPoint {
     EntityPoint {
         previous_location: loc - Vector2D(0.4, 0.0),
+        momentum: Vector2D(0.4, 0.0),
         location: loc,
         friction,
     }
