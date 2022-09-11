@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+
 use crate::game::Vector2D;
 use crate::rider::bone::{Bone, BoneType};
 use crate::rider::point::{EntityPoint, PointIndex};
 use crate::rider::Joint;
-use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Entity {
@@ -124,11 +125,17 @@ pub mod boshsled {
     }
 
     pub fn default_bones(points: &HashMap<PointIndex, EntityPoint>) -> Vec<Bone> {
+        // insert mounter bones in between regular and repel bones
+        let (bosh_normal_bones, bosh_repel_bones) = bosh::default_bones(points)
+            .iter()
+            .partition(|bone| matches!(bone.bone_type, BoneType::Normal));
+
         vec![
             sled::default_bones(points),
             default_sled_mounter_bones(points),
-            bosh::default_bones(points),
+            bosh_normal_bones,
             default_bosh_mounter_bones(points),
+            bosh_repel_bones,
         ]
         .concat()
     }
@@ -337,6 +344,7 @@ fn make_bones(
         })
         .collect()
 }
+
 fn length_between(
     p1: &PointIndex,
     p2: &PointIndex,
