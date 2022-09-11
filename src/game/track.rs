@@ -82,6 +82,11 @@ impl Track {
         self.grid.lines_near(point, 1)
     }
 
+    /// Gets all of the lines in a rectangle.
+    pub fn lines_near_box(&self, p1: Vector2D, p2: Vector2D) -> Vec<&Line> {
+        self.grid.lines_near_box(p1, p2)
+    }
+
     /// Gets the rider positions for a zero-indexed frame.
     pub fn entity_positions_at(&self, frame: usize) -> Vec<Entity> {
         let mut position_cache = self.precomputed_rider_positions.borrow_mut();

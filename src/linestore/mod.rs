@@ -221,4 +221,30 @@ mod tests {
         let lines = grid.all_lines();
         assert_eq!(lines, &vec![line1, line2, line3, line4, far_line]);
     }
+
+    #[test]
+    fn lines_in_box() {
+        let line = Line::builder().point(0.0, 0.0).point(100.0, 0.0).build();
+
+        let grid = Grid::new(vec![line]);
+
+        let should_contain_line_cases = vec![
+            grid.lines_near_box(Vector2D(-5.0, -5.0), Vector2D(5.0, 5.0)),
+            grid.lines_near_box(Vector2D(0.0, 0.0), Vector2D(0.0, 0.0)),
+            grid.lines_near_box(Vector2D(100.0, 0.0), Vector2D(100.0, 0.0)),
+            grid.lines_near_box(Vector2D(50.0, 0.0), Vector2D(50.0, 0.0)),
+            grid.lines_near_box(Vector2D(-30.0, -40.0), Vector2D(5.0, 20.0)),
+            grid.lines_near_box(Vector2D(5.0, 20.0), Vector2D(-30.0, -40.0)),
+        ];
+        let should_not_contain_line_cases =
+            vec![grid.lines_near_box(Vector2D(500.0, 0.0), Vector2D(550.0, 5.0))];
+
+        for lines in should_contain_line_cases {
+            assert_eq!(lines, vec![&line]);
+        }
+
+        for lines in should_not_contain_line_cases {
+            assert_eq!(lines, Vec::<&Line>::new());
+        }
+    }
 }

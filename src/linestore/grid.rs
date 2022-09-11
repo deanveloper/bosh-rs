@@ -36,6 +36,13 @@ impl Grid {
             .collect()
     }
 
+    pub fn lines_near_box(&self, loc1: Vector2D, loc2: Vector2D) -> Vec<&Line> {
+        self.line_indices_in_rectangle(loc1, loc2)
+            .into_iter()
+            .map(|l| self.lines.line_at(l).expect("no line at index"))
+            .collect()
+    }
+
     pub fn add_line(&mut self, line: Line) {
         let lines_idx = self.lines.add_line(line);
 
@@ -98,6 +105,26 @@ impl Grid {
                 grid_index.0 += dx;
                 grid_index.1 += dy;
 
+                if let Some(store_indices) = self.grid.get(&grid_index).cloned() {
+                    for store_index in store_indices {
+                        nearby_line_indices.insert(store_index);
+                    }
+                }
+            }
+        }
+
+        nearby_line_indices
+    }
+
+    fn line_indices_in_rectangle(&self, loc1: Vector2D, loc2: Vector2D) -> HashSet<StoreIndex> {
+        let mut nearby_line_indices: HashSet<StoreIndex> = Default::default();
+
+        let idx1 = GridIndex::from_location(loc1);
+        let idx2 = GridIndex::from_location(loc2);
+
+        for x in i64::min(idx1.0, idx2.0)..=i64::max(idx1.0, idx2.0) {
+            for y in i64::min(idx1.1, idx2.1)..=i64::max(idx1.1, idx2.1) {
+                let grid_index = GridIndex(x, y);
                 if let Some(store_indices) = self.grid.get(&grid_index).cloned() {
                     for store_index in store_indices {
                         nearby_line_indices.insert(store_index);
