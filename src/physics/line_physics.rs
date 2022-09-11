@@ -18,19 +18,20 @@ pub fn apply_gravity_wells(point: &mut EntityPoint, track: &Track) {
         let mut friction_adjustment =
             perpendicular.rotate90_right() * point.friction * distance_below;
         if point.previous_location.0 >= next_location.0 {
-            friction_adjustment.0 = -friction_adjustment.0
+            friction_adjustment.0 = -friction_adjustment.0;
         }
         if point.previous_location.1 < next_location.1 {
-            friction_adjustment.1 = -friction_adjustment.1
-        }
-        if let LineType::Accelerate { amount: accel } = line.line_type {
-            let direction = if line.flipped { -1.0 } else { 1.0 };
-
-            point.previous_location +=
-                line.as_vector2d().normalize() * (accel as f64 * 0.1 * direction);
+            friction_adjustment.1 = -friction_adjustment.1;
         }
 
         point.previous_location += friction_adjustment;
         point.location = next_location;
+
+        if let LineType::Accelerate { amount: accel } = line.line_type {
+            let direction = if line.flipped { 1.0 } else { -1.0 };
+
+            point.previous_location +=
+                line.as_vector2d().normalize() * (accel as f64 * 0.1 * direction);
+        }
     }
 }

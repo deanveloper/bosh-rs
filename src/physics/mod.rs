@@ -12,6 +12,7 @@ mod tests {
     use crate::game::Vector2D;
     use crate::physics::line_physics::apply_gravity_wells;
     use crate::rider::{Bone, BoneType, Entity, EntityPoint, PointIndex};
+    use crate::LineType;
 
     fn _avg_position(entity: &Entity) -> Vector2D {
         let bosh_sum: Vector2D = entity.points.values().map(|p| p.location).sum();
@@ -225,6 +226,33 @@ mod tests {
                 previous_location: Vector2D(11.862884095165988, -10.089233973375801),
                 location: Vector2D(14.127750467596647, -10.151751900395013),
                 momentum: Vector2D(2.2295236487517673, -0.3484422284398246),
+                friction: 0.0,
+            }
+        );
+    }
+
+    #[test]
+    fn rider_accel() {
+        let entity = Entity::default_boshsled();
+        let track = Track::new(
+            vec![entity],
+            vec![Line::builder()
+                .line_type(LineType::Accelerate { amount: 1 })
+                .point(-5.0, 1.0)
+                .point(10.0, 1.0)
+                .build()],
+        );
+
+        let entities = track.entity_positions_at(10);
+        let entity = entities.get(0).unwrap();
+
+        // comparison is to linerider.com's physics
+        assert_eq!(
+            entity.point_at(PointIndex::SledTail),
+            &EntityPoint {
+                previous_location: Vector2D(8.546038495647734, -17.059432508544703),
+                location: Vector2D(10.437748868700394, -17.70589979578289),
+                momentum: Vector2D(1.8303232225405575, -0.8753245061408925),
                 friction: 0.0,
             }
         );
