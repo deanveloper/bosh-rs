@@ -215,16 +215,16 @@ mod tests {
                 .build()],
         );
 
-        let entities = track.entity_positions_at(3);
+        let entities = track.entity_positions_at(10);
         let entity = entities.get(0).unwrap();
 
         // comparison is to linerider.com's physics
         assert_eq!(
             entity.point_at(PointIndex::SledTail),
             &EntityPoint {
-                previous_location: Vector2D(0.7215415143600306, 2.839539941622091,),
-                location: Vector2D(1.5156419932602299, -0.004549897633636998,),
-                momentum: Vector2D(0.32154151436003053, -2.160460058377909,),
+                previous_location: Vector2D(11.862884095165988, -10.089233973375801),
+                location: Vector2D(14.127750467596647, -10.151751900395013),
+                momentum: Vector2D(2.2295236487517673, -0.3484422284398246),
                 friction: 0.0,
             }
         );

@@ -105,6 +105,7 @@ impl PhysicsEntity {
     }
 }
 
+#[derive(Clone)]
 pub enum UpdateBonesResult {
     Same(PhysicsEntity),
     Broken(PhysicsEntity, PhysicsEntity),

@@ -85,7 +85,7 @@ impl Vector2D {
     pub fn normalize(self) -> Vector2D {
         let distance = self.length_squared().sqrt();
 
-        Vector2D(self.0 / distance, self.1 / distance)
+        Vector2D(self.0 * (1.0 / distance), self.1 * (1.0 / distance))
     }
 }
 

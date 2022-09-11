@@ -7,7 +7,6 @@ pub fn apply_gravity_wells(point: &mut EntityPoint, track: &Track) {
         if matches!(line.line_type, LineType::Scenery) {
             continue;
         }
-
         let distance_below = track.distance_below_line(line, point);
         if distance_below == 0.0 {
             continue;
