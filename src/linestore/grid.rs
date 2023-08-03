@@ -169,6 +169,7 @@ impl GridIndex {
     }
 }
 
+/// An iterator which iterates over the grid indices that a line intersects.
 struct GridIndexLineIter {
     current_point: Vector2D,
     slope: f64,
